@@ -1,0 +1,21 @@
+Package: rthesis
+Title: Functionality for master thesis
+Version: 0.0.1
+Authors@R: 
+    person("Felix", "Hofmann", , "felix.hofmann2@uzh.ch", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3891-6239"))
+Description: This package provides the functionality that is used for the author's Master thesis. It contains functions to fetch data from various sources.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+    httr,
+    dplyr,
+    magrittr,
+    purrr,
+    readr,
+    tidyr
