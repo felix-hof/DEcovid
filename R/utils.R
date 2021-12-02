@@ -89,6 +89,8 @@ utils::globalVariables(c(
   # nuts_table.R
   "features", "LK", "lvl3", "adm_unit", "NUTS_ID", ".", "NAME_LATN", "lvl2", "lvl1",
   # geoms.R
-  "geometry"
+  "geometry",
+  # population.R
+  "geo", "sex", "time", "unit", "values"
 ))
 

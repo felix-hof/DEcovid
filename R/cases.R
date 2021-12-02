@@ -6,7 +6,10 @@
 #' @export
 #'
 #' @examples
-#'cases <- get_cases()
+#' \dontrun{
+#' cases <- get_cases()
+#' }
+#'
 #'
 get_cases <- function(cache_dir = NULL){
 
