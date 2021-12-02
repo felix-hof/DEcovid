@@ -1,3 +1,13 @@
+#' Get geometries for the thesis
+#'
+#' @template cache_dir
+#'
+#' @return A \code{list} of length 2. Both elements of this list are of class \code{sf}. The first contains geometries of German NUTS regions
+#' whereas the second elements contains geometries of Germany's neighbour countries.
+#' @export
+#'
+#' @examples
+#' geoms <- get_geoms()
 get_geoms <- function(cache_dir = NULL){
 
   # set parameters for cacheing
@@ -16,7 +26,6 @@ get_geoms <- function(cache_dir = NULL){
   }
 
   return(dat)
-
 }
 
 #' Get geometries of German NUTS units and neighbouring countries as \code{sf} object
@@ -99,19 +108,20 @@ process_shapefiles <- function(cache_dir, filename){
 #' @template cache_dir
 #' @return This function invisibly returns \code{0} if everything worked well
 #'
+#' @importFrom utils download.file unzip
 get_shapefiles_from_source <- function(cache_dir){
 
   shapefile_dir <- "shapefiles"
 
   url <- "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.shp.zip"
-  download.file(url, destfile = make_path(cache_dir, "nuts_shp.zip"), quiet = TRUE)
-  files <- unzip(make_path(cache_dir, "nuts_shp.zip"), exdir = make_path(cache_dir, shapefile_dir))
+  utils::download.file(url, destfile = make_path(cache_dir, "nuts_shp.zip"), quiet = TRUE)
+  files <- utils::unzip(make_path(cache_dir, "nuts_shp.zip"), exdir = make_path(cache_dir, shapefile_dir))
   unlink(make_path(cache_dir, "nuts_shp.zip"))
   zip_files <- files[grepl(".zip$", files)]
   shapefiles <- invisible(sapply(zip_files, function(x){
     dir_names <- gsub(".shp.zip$", "", x)
     if(!dir.exists(dir_names)) dir.create(dir_names)
-    unzip(x, exdir = dir_names)
+    utils::unzip(x, exdir = dir_names)
     return(dir_names)
   }, USE.NAMES = FALSE))
   unlink(zip_files)

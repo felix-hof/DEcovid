@@ -18,4 +18,5 @@ Imports:
     magrittr,
     purrr,
     readr,
-    tidyr
+    tidyr,
+    sf

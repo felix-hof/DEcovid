@@ -87,6 +87,8 @@ utils::globalVariables(c(
   ".", "Meldedatum", "Altersgruppe", "IdLandkreis", "AnzahlFall", "NeuerFall", "AnzahlTodesfall",
   "NeuerTodesfall", "NeuerTodesfall", "new_cases", "new_deaths", "adm_unit", "lvl3", "age",
   # nuts_table.R
-  "features", "LK", "lvl3", "adm_unit", "NUTS_ID", ".", "NAME_LATN", "lvl2", "lvl1"
+  "features", "LK", "lvl3", "adm_unit", "NUTS_ID", ".", "NAME_LATN", "lvl2", "lvl1",
+  # geoms.R
+  "geometry"
 ))
 
