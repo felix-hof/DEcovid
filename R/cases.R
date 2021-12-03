@@ -61,7 +61,8 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
                        which = "Datenstand",
                        value = as.Date(sub(",.+", "", .$Datenstand[1]), format = "%d.%m.%Y")) %>%
     dplyr::mutate(Meldedatum = as.Date(gsub("\\s.+$", "", Meldedatum), format = "%Y/%m/%d"),
-                  Altersgruppe = gsub("A", "", Altersgruppe)) %>%
+                  Altersgruppe = gsub("A", "", Altersgruppe),
+                  Altersgruppe = ifelse(Altersgruppe == "unbekannt", "unknown", Altersgruppe)) %>%
     dplyr::group_by(Altersgruppe, Meldedatum, IdLandkreis) %>%
     dplyr::summarise(new_cases = sum(AnzahlFall[NeuerFall >= 0]),
                      new_deaths = sum(AnzahlTodesfall[NeuerTodesfall >= 0]),
