@@ -93,6 +93,11 @@ utils::globalVariables(c(
   # population.R
   "geo", "sex", "time", "unit", "values",
   # temperature.R
-  "CN", "LAT", "LON", "ts", "DATE", "TG", "n_na"
+  "CN", "LAT", "LON", "ts", "DATE", "TG", "n_na",
+  # stringency.R
+  "CountryCode", "Date", "StringencyIndex", "value",
+  # urbanicity.R
+  "Bevoelkerung", "Land", "RB", "Kreis", "Gemeindename", "population", "value"
+
 ))
 

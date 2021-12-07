@@ -6,7 +6,7 @@
 #' @export
 #'
 #' @examples
-#'nts <- nuts_table()
+#' nts <- nuts_table()
 #'
 nuts_table <- function(cache_dir = NULL){
 
