@@ -97,7 +97,12 @@ utils::globalVariables(c(
   # stringency.R
   "CountryCode", "Date", "StringencyIndex", "value",
   # urbanicity.R
-  "Bevoelkerung", "Land", "RB", "Kreis", "Gemeindename", "population", "value"
-
+  "Bevoelkerung", "Land", "RB", "Kreis", "Gemeindename", "population", "value",
+  # vaccination.R
+  "personen_erst_kumulativ", "unvac", "log_unvac",
+  # holidays.R
+  "lvl1_name", "holiday",
+  # testing.R
+  "week", "ntests", "trate"
 ))
 

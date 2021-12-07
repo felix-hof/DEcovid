@@ -22,4 +22,7 @@ Imports:
     sf,
     restatapi,
     parallel,
-    readxl
+    readxl,
+    ISOweek,
+    stringr,
+    rvest
