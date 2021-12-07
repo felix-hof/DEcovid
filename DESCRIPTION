@@ -25,4 +25,5 @@ Imports:
     readxl,
     ISOweek,
     stringr,
-    rvest
+    rvest,
+    rlang
