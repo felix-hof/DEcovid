@@ -6,6 +6,7 @@
 #' @export
 #'
 #' @examples
+#' population <- get_population()
 get_population <- function(cache_dir = NULL){
 
   # set parameters for cacheing

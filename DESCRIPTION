@@ -20,4 +20,5 @@ Imports:
     readr,
     tidyr,
     sf,
-    restatapi
+    restatapi,
+    parallel

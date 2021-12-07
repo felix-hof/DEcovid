@@ -91,6 +91,8 @@ utils::globalVariables(c(
   # geoms.R
   "geometry",
   # population.R
-  "geo", "sex", "time", "unit", "values"
+  "geo", "sex", "time", "unit", "values",
+  # temperature.R
+  "CN", "LAT", "LON", "ts", "DATE", "TG", "n_na"
 ))
 
