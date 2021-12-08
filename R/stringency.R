@@ -34,7 +34,7 @@ get_stringency <- function(cache_dir = NULL){
 #' @template cache_dir
 #' @param  filename The name of the file where the stringency data is stored.
 #'
-#' @return A \code{tibble} with columns \code{age}, \code{lvl3} and \code{value} (contains population counts).
+#' @return A \code{tibble} with columns \code{date}  and \code{value} (contains stringency index).
 #'
 #' @importFrom readr read_csv
 #' @importFrom dplyr filter select mutate rename arrange
