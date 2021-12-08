@@ -79,10 +79,75 @@ read_from_cache <- function(cache_dir, filename, cutoff, units){
   }
 }
 
+#' Get data from Eurostat via the API instead of the bulk download facility
+#'
+#' @param dataset A \code{character} vector of length 1. The ID of a Eurostat data set.
+#' @param args A \code{list} object. Contains further arguments used to filter \code{dataset}
+#' server side.
+#'
+#' @return A \code{tibble} with the requested data.
+#' @details The argument \code{args} can be looked up using the Eurostat query builder.
+#'
+#' @importFrom httr GET content
+#' @importFrom purrr map cross_df
+#' @importFrom dplyr arrange across bind_cols tibble mutate
+#' @importFrom tidyr everything
+#'
+#' @examples
+#' dataset <- "reg_area3"
+#' args <- list(geoLevel = paste0("nuts", 1:3),
+#'              filterNonGeo = "1",
+#'              precision = "1",
+#'              unit = "KM2",
+#'              landuse = "TOTAL",
+#'              shortlabel = "1",
+#'              time = "2016")
+#' area_size <- eurostat_query(dataset = dataset, args = args)
+#'
+#' @export
+#'
+eurostat_query <- function(dataset, args){
+  # build query
+  base_url <- "http://ec.europa.eu/eurostat/wdds/rest/data/v2.1/json/en/"
+  args <- sapply(seq_along(args), function(x){
+    paste0(names(args)[x], "=",unlist(args[x], use.names = FALSE), collapse = "&")
+  })
+  query <- paste0(base_url, dataset, "?", paste0(args, collapse = "&"))
+  # get response
+  res <- httr::GET(query)
+  # extract data if request contains status code 200
+  if(res$status_code == 200){
+    res <- httr::content(res)
+    # https://ec.europa.eu/eurostat/data/database/information see here for a list of flags like ":" for missing data
+    out <- purrr::map(res$dimension, function(x) names(x$category$index)) %>%
+      purrr::cross_df() %>%
+      dplyr::arrange(dplyr::across(tidyr::everything())) %>%
+      {
+        data1 <- unlist(res$value, use.names = TRUE)
+        data2 <- unlist(res$status, use.names = TRUE)
+        data2[grepl(":", data2)] <- NA_real_
+        data2 <- data2[is.na(data2)] # ignore the other status flags
+        dplyr::bind_cols(.,
+                         dplyr::tibble(value = c(data1, data2)) %>%
+                           dplyr::mutate(index = c(names(data1), names(data2)),
+                                         index = as.numeric(index)) %>%
+                           dplyr::arrange(index))
+      } %>%
+      dplyr::mutate(value = as.numeric(value))
+    return(out)
+  } else {
+    stop(paste0("The following Eurostat query: \n",
+                query, " \n",
+                "did not exit with status code 200 (",
+                res$status_code, ")."))
+  }
+}
 
 # Handle global variables for R CMD check ----
 
 utils::globalVariables(c(
+  # utils.R
+  "index",
   # get_cases.R
   ".", "Meldedatum", "Altersgruppe", "IdLandkreis", "AnzahlFall", "NeuerFall", "AnzahlTodesfall",
   "NeuerTodesfall", "NeuerTodesfall", "new_cases", "new_deaths", "adm_unit", "lvl3", "age",
