@@ -169,6 +169,8 @@ utils::globalVariables(c(
   # holidays.R
   "lvl1_name", "holiday",
   # testing.R
-  "week", "ntests", "trate"
+  "week", "ntests", "trate",
+  # area_size.R
+  "lvl3_name", "landuse"
 ))
 
