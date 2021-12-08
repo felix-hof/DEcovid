@@ -19,7 +19,8 @@ A \code{tibble} with the requested data.
 Get data from Eurostat via the API instead of the bulk download facility
 }
 \details{
-The argument \code{args} can be looked up using the Eurostat query builder.
+The argument \code{args} can be looked up using the
+\href{https://ec.europa.eu/eurostat/web/json-and-unicode-web-services/getting-started/query-builder}{Eurostat query builder}.
 }
 \examples{
 dataset <- "reg_area3"

@@ -86,7 +86,8 @@ read_from_cache <- function(cache_dir, filename, cutoff, units){
 #' server side.
 #'
 #' @return A \code{tibble} with the requested data.
-#' @details The argument \code{args} can be looked up using the Eurostat query builder.
+#' @details The argument \code{args} can be looked up using the
+#' \href{https://ec.europa.eu/eurostat/web/json-and-unicode-web-services/getting-started/query-builder}{Eurostat query builder}.
 #'
 #' @importFrom httr GET content
 #' @importFrom purrr map cross_df
