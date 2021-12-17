@@ -2,8 +2,9 @@
 #'
 #' @template cache_dir
 #'
-#' @return A \code{list} of length 2. Both elements of this list are of class \code{sf}. The first contains geometries of German NUTS regions
-#' whereas the second elements contains geometries of Germany's neighbour countries.
+#' @return A \code{list} of length 5. All elements of this list are of class \code{sf}. The first four elements
+#' contain geometries of German NUTS regions on levels 0-3, whereas the fifth elements contains
+#' geometries of Germany's neighbour countries.
 #' @export
 #'
 #' @examples
@@ -91,8 +92,12 @@ process_shapefiles <- function(cache_dir, filename){
     dplyr::arrange(NUTS_ID)
 
   # create out object
-  out_obj <- list(de_geoms = de_geoms,
-       neighbour_geoms = neighbour_geoms)
+  out_obj <- list(
+    nuts_0 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 2),
+    nuts_1 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 3),
+    nuts_2 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 4),
+    nuts_3 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 5),
+    neighbours = neighbour_geoms)
 
   # save this to disk
   saveRDS(out_obj,

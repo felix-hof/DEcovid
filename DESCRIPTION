@@ -26,4 +26,7 @@ Imports:
     ISOweek,
     stringr,
     rvest,
-    rlang
+    rlang,
+    MapColoring
+Remotes:
+    github::hunzikp/MapColoring
