@@ -4,17 +4,15 @@
 \alias{make_path}
 \title{Construct path to a file from input directory and a file name}
 \usage{
-make_path(dir_path, filename)
+make_path(...)
 }
 \arguments{
-\item{dir_path}{a string determining the path to the file directory.}
-
-\item{filename}{a string determining the file name}
+\item{...}{The names of the directories and/or files in the correct order.}
 }
 \value{
 Path to file for further use. Object of class \code{character}.
 }
 \description{
 This function constructs valid paths from a
-path to a directory and the file name.
+number of character strings that may or may not end with a directory separator.
 }

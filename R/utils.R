@@ -37,17 +37,25 @@ needs_update <- function(filepath, cutoff, units){
 
 #' Construct path to a file from input directory and a file name
 #' @description This function constructs valid paths from a
-#' path to a directory and the file name.
-#' @param dir_path a string determining the path to the file directory.
-#' @param filename a string determining the file name
+#' number of character strings that may or may not end with a directory separator.
+#' @param ... The names of the directories and/or files in the correct order.
 #' @return Path to file for further use. Object of class \code{character}.
-#'
-make_path <- function(dir_path, filename){
-  ifelse(endsWith(dir_path, "/"),
-         out <- file.path(sub("\\/$", "", dir_path), filename),
-         out <- file.path(dir_path, filename))
+#' @importFrom purrr map
+make_path <- function(...){
+  args <- list(...)#lapply(as.list(substitute(...())), eval)
+  n <- vapply(args, length, integer(1L))
+  if(!(length(unique(n[n != 1L])) %in% c(0L, 1L))){
+    stop("Invalid number of input lengths.")
+  }
+  maxn <- max(n)
+  args <- lapply(args, function(x){
+    out <- if(length(x) == 1) {rep(x, maxn)} else {x}
+    gsub("\\/$", "", out)
+  })
+  vapply(seq_len(maxn), function(x){
+    do.call("file.path", purrr::map(args, x))
+  }, character(1L))
 }
-
 
 #' Read file from cache directory or get data from source
 #' @description Returns a decision whether to get data from a cached file (\code{TRUE}) or
@@ -63,7 +71,7 @@ make_path <- function(dir_path, filename){
 #' not older than \code{cutoff} in the specified \code{units}. Otherwise returns \code{FALSE}.
 #'
 read_from_cache <- function(cache_dir, filename, cutoff, units){
-  filepath <- make_path(dir_path = cache_dir, filename = filename)
+  filepath <- make_path(cache_dir, filename)
   # check whether cache directory exists, if not create it and return false
   if(!dir.exists(cache_dir)){
     dir.create(cache_dir, recursive = TRUE)
