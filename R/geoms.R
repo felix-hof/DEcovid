@@ -16,6 +16,7 @@ get_geoms <- function(cache_dir = NULL){
   cache_dir <- get_cache_dir(cache_dir)
 
   # make decision whether to get data from cached file or from source
+  #cat(paste(ls(), collapse = ", "))
   from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
                                 cutoff = 60, units = "days")
 
@@ -23,8 +24,14 @@ get_geoms <- function(cache_dir = NULL){
   if(from_cache){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
-    dat <- process_shapefiles(cache_dir, filename)
+    dat <- process_shapefiles(cache_dir = cache_dir, filename = filename)
   }
+
+  # add color indices
+  colors <- get_map_colors(geoms = dat, cache_dir = cache_dir)
+  dat <- lapply(seq_along(dat), function(x){
+    dplyr::left_join(x = dat[[x]], y = colors[[x]], by = c("NUTS_ID" = "region"))
+  })
 
   return(dat)
 }
@@ -46,7 +53,7 @@ process_shapefiles <- function(cache_dir, filename){
   shp_to_use <- "NUTS_RG_01M_2021_3035"
 
   # Find out whether to use cached shapefiles
-  cache_dir <- get_cache_dir(cache_dir)
+  #cache_dir <- get_cache_dir(cache_dir)
   dir_path <- make_path(cache_dir, shapefile_dir)
   make_new <- TRUE
   if(dir.exists(dir_path)){
@@ -59,7 +66,7 @@ process_shapefiles <- function(cache_dir, filename){
   }
 
   # read data and process it
-  areas <- sf::st_read(dsn = make_path(cache_dir, file.path(shapefile_dir, shp_to_use)),
+  areas <- sf::st_read(dsn = make_path(cache_dir, shapefile_dir, shp_to_use),
                        layer = shp_to_use, quiet = TRUE) %>%
     dplyr::select(NUTS_ID, geometry) %>%
     # remove overseas territories and Corse from France
