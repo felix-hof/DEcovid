@@ -92,7 +92,7 @@ get_map_colors_from_source <- function(geoms, nb_pattern, cache_dir, filename){
     adj_mat <- sf::st_relate(geoms[[x]], pattern = nb_pattern, sparse = FALSE)
     return(
       dplyr::tibble(region = geoms[[x]][[name_cols[x]]],
-                    color = MapColoring::getColoring(adj_mat))
+                    color = factor(MapColoring::getColoring(adj_mat)))
     )
   })
 
