@@ -1,18 +1,41 @@
 #' Get temperature data set for this thesis
 #'
-#' @param completed A \code{logical} of length 1 which indicates whether or not to estimate missing values from
-#' neighbouring weather stations.
+#' @param complete A \code{character} vector of length 1 which determines the level of processing. If \code{"none"}, returns
+#' the time series at each station with potential missing data. If \code{"station"}, the potentially missing temperatures are
+#' completed by averaging the temperatures at the three closest weather stations that have non-missing data available for the
+#' same day. If \code{"region"}, the temperature time series at all stations within a NUTS-3 region (plus those within \code{tol}
+#' kilometers of the region boundary) are averaged in order to return a single temperature time series per NUTS-3 region. If there
+#' is no station within a NUTS-3 region plus the tolerance, the time series for that region is calculated as an average of the
+#' region's neighbours.
+#' @param tol The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
+#' is still considered as relevant for the temperature within a specific region.
 #' @template cache_dir
 #'
 #' @return A \code{tibble} containing all weather stations within Germany
 #' with location and temperature time series starting on 1 January 2020.
 #' @export
 #'
+#' @importFrom units set_units
+#'
 #' @examples
 #' \dontrun{
-#' temperature <- get_temperature()
+#' temperature <- get_temperature(complete = "station")
 #' }
-get_temperature <- function(completed = FALSE, cache_dir = NULL){
+get_temperature <- function(complete = c("none", "station", "region"), tol = 0, cache_dir = NULL){
+
+  # nb_pattern used in this function
+  nb_pattern <- "F***1****" # Use "F***T****" if a point where geoms touch is enough for two regions to be neighbours
+
+  complete <-  match.arg(complete)
+  if(length(complete) != 1L){
+    stop("The 'complete' argument must be of length 1.")
+  }
+  if(!is.numeric(tol) || tol < 0){
+    stop("The 'tol' argument must be numeric and larger than 0.")
+  }
+  if(complete == "region"){
+    tol <- units::set_units(tol, "km")
+  }
 
   # set parameters for cacheing
   filename <- "temperature.rds"
@@ -30,16 +53,102 @@ get_temperature <- function(completed = FALSE, cache_dir = NULL){
     temperature <- process_temperature(cache_dir, filename)
   }
 
-  if(completed){
+  # if we completed stations required, complete
+  if(complete %in% c("station", "region")){
     temperature <- complete_temp_ts(temperature)
+  }
+
+  # if per NUTS-3 region required, summarise
+  if(complete == "region"){
+    temperature <- summarise_temp_to_region(temperature = temperature, tol = tol,
+                                            nb_pattern = nb_pattern, cache_dir = cache_dir)
   }
 
   return(temperature)
 }
 
+#' Summarise the completed time series of all stations to NUTS-3 region specific temperature time series.
+#'
+#' @param temperature The output \code{tibble} of \code{complete_temp_ts()}.
+#' @param tol The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
+#' is still considered as relevant for the temperature within a specific region.
+#' @param nb_pattern The neighbourhood pattern that is used to calculate the neighbourhood structure.
+#' @template cache_dir
+#'
+#' @return A \code{tibble} with columns \code{lvl3} and \code{ts}. The column \code{ts} is a nested column and
+#' contains the temperature time series for the respective NUTS-3 region.
+#'
+#' @importFrom sf st_distance st_drop_geometry st_relate
+#' @importFrom dplyr tibble group_by summarise mutate rename bind_rows select arrange
+#' @importFrom tidyr unnest nest
+summarise_temp_to_region <- function(temperature, tol, nb_pattern, cache_dir){
+
+  # get geometries of NUTS-3 regions
+  geoms <- get_geoms(cache_dir = cache_dir)[[4]]
+
+  # calculate distances from weather stations to region polygons
+  dist <- sf::st_distance(temperature$geometry, geoms$geometry)
+
+  # for every region get all stations within the the defined distance from the polygon
+  # and calculate mean temperature
+  temp_list <- lapply(seq_len(nrow(geoms)), function(x){
+    idx <- order(dist[, x], decreasing = FALSE)
+    tb <- dplyr::tibble(weather_station = idx,
+                        distance = dist[idx, x])
+    if(tb$distance[1] <= tol){
+      tb <- tb[which(tb$distance <= tol), ]
+      temperature[tb$weather_station, c("STANAME", "ts")] %>%
+        sf::st_drop_geometry() %>%
+        tidyr::unnest(cols = "ts") %>%
+        # average temperatures for each day
+        dplyr::group_by(date) %>%
+        dplyr::summarise(temperature = mean(temperature)) %>%
+        # add region and rename
+        dplyr::mutate(lvl3 = geoms$NUTS_ID[x]) %>%
+        dplyr::rename(value = temperature)
+    } else {
+      return(NA)
+    }
+  })
+  names(temp_list) <- geoms$NUTS_ID
+
+  # if there are regions that have no station within the tolerance
+  # compute spatial neighbourhood and take mean of neighbours
+  if(any(is.na(temp_list))){
+    # calculate neighbourhood order
+    adj_order <- sf::st_relate(geoms, pattern = nb_pattern, sparse = TRUE)
+    # fill empty list components
+    no_temp_regions <- which(is.na(temp_list))
+    temp_list[no_temp_regions] <- lapply(no_temp_regions, function(i){
+      # get temperatures of neighbours
+      nb_temp_list <- temp_list[adj_order[[i]]]
+      # throw out neighbours without weather stations
+      nb_temp_list <- nb_temp_list[!is.na(nb_temp_list)]
+      # Throw errors if none of the neighbours have temperature data
+      if(length(nb_temp_list) == 0L) stop("Region", names(temp_list)[i], "does not have any neighbours with temperature data.\n")
+      # Calculate average
+      nb_temp_list %>%
+        dplyr::bind_rows() %>%
+        dplyr::group_by(date) %>%
+        dplyr::summarise(value = mean(value), .groups = "drop") %>%
+        dplyr::mutate(lvl3 = names(temp_list)[i]) %>%
+        dplyr::select(date, value, lvl3) %>%
+        dplyr::arrange(date)
+    })
+  }
+
+  # return object
+  temp_list <- temp_list %>%
+    dplyr::bind_rows() %>%
+    tidyr::nest(ts = c("date", "value"))
+
+  return(temp_list)
+}
+
+
 #' Estimate the temperature on a given day for a given station
 #'
-#' @param temperature The output \code{tibble} of \code{process_temperature}.
+#' @param temperature The output \code{tibble} of \code{process_temperature()}.
 #'
 #' @return The same \code{tibble} as the input but with completed temperature time series.
 #' @details The temperature time series are completed through the following approach:

@@ -7,7 +7,7 @@
 complete_temp_ts(temperature)
 }
 \arguments{
-\item{temperature}{The output \code{tibble} of \code{process_temperature}.}
+\item{temperature}{The output \code{tibble} of \code{process_temperature()}.}
 }
 \value{
 The same \code{tibble} as the input but with completed temperature time series.

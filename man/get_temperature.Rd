@@ -4,11 +4,23 @@
 \alias{get_temperature}
 \title{Get temperature data set for this thesis}
 \usage{
-get_temperature(completed = FALSE, cache_dir = NULL)
+get_temperature(
+  complete = c("none", "station", "region"),
+  tol = 0,
+  cache_dir = NULL
+)
 }
 \arguments{
-\item{completed}{A \code{logical} of length 1 which indicates whether or not to estimate missing values from
-neighbouring weather stations.}
+\item{complete}{A \code{character} vector of length 1 which determines the level of processing. If \code{"none"}, returns
+the time series at each station with potential missing data. If \code{"station"}, the potentially missing temperatures are
+completed by averaging the temperatures at the three closest weather stations that have non-missing data available for the
+same day. If \code{"region"}, the temperature time series at all stations within a NUTS-3 region (plus those within \code{tol}
+kilometers of the region boundary) are averaged in order to return a single temperature time series per NUTS-3 region. If there
+is no station within a NUTS-3 region plus the tolerance, the time series for that region is calculated as an average of the
+region's neighbours.}
+
+\item{tol}{The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
+is still considered as relevant for the temperature within a specific region.}
 
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.
@@ -34,6 +46,6 @@ Get temperature data set for this thesis
 }
 \examples{
 \dontrun{
-temperature <- get_temperature()
+temperature <- get_temperature(complete = "station")
 }
 }
