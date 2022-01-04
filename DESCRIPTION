@@ -27,6 +27,7 @@ Imports:
     stringr,
     rvest,
     rlang,
-    MapColoring
+    MapColoring,
+    units
 Remotes:
     github::hunzikp/MapColoring
