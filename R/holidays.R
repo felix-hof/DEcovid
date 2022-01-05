@@ -85,7 +85,7 @@ get_holidays_from_source <- function(cache_dir, filename){
   # get Bundesland specific holidays 2021
   bl2021 <- hols2021 %>%
     rvest::html_elements(".content-frame-filled") %>%
-    magrittr::extract(4) %>%
+    magrittr::extract(3) %>%
     rvest::html_children() %>%
     rvest::html_text() %>%
     magrittr::extract(2:length(.)) %>%
