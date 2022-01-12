@@ -25,7 +25,7 @@ the options.}
 \item{filename}{The name of the file that the holiday data is stored in.}
 }
 \value{
-A \code{tibble} with columns \code{date}, \code{lvl3} and \code{value} (contains the binary holiday indicator).
+A \code{tibble} with columns \code{date}, \code{region} and \code{value} (contains the binary holiday indicator).
 }
 \description{
 Get holiday data from appfield.net
