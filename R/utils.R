@@ -159,7 +159,7 @@ utils::globalVariables(c(
   "index",
   # get_cases.R
   ".", "Meldedatum", "Altersgruppe", "IdLandkreis", "AnzahlFall", "NeuerFall", "AnzahlTodesfall",
-  "NeuerTodesfall", "NeuerTodesfall", "new_cases", "new_deaths", "adm_unit", "lvl3", "age",
+  "NeuerTodesfall", "NeuerTodesfall", "new_cases", "new_deaths", "adm_unit", "lvl3", "age", "region",
   # nuts_table.R
   "features", "LK", "lvl3", "adm_unit", "NUTS_ID", ".", "NAME_LATN", "lvl2", "lvl1",
   # geoms.R
@@ -179,6 +179,8 @@ utils::globalVariables(c(
   # testing.R
   "week", "ntests", "trate",
   # area_size.R
-  "lvl3_name", "landuse"
+  "lvl3_name", "landuse",
+  # aggregation_functions.R
+  "region"
 ))
 
