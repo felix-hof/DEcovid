@@ -1,17 +1,38 @@
 #' Get the case data from RKI repository
 #'
+#' @param time_res A \code{character} vector of length 1 indicating the temporal resolution of the data.
+#' Accepted values are either \code{"daily"} or \code{"weekly"}.
+#' @param spat_res A \code{numeric} vector of length 1 indicating the spatial resolution of the data.
+#' Accepted values are \code{0}, \code{1}, \code{2} and \code{3}. Corresponds to the respective NUTS level.
+#' @param age_res A \code{character} vector of length 1 indicating whether or not the data should be stratified by
+#' age groups. Accepted values are \code{"age"} and \code{"no_age"}.
 #' @template cache_dir
 #'
-#' @return A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the counts) and \code{lvl3}.
+#' @return A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the counts) and \code{region}.
+#' The variables are aggregated to the desired level.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' cases <- get_cases()
+#' cases <- get_cases(time_res = "daily", spat_res = 3, age_res = "age")
+#' cases <- get_cases(time_res = "weekly", spat_res = 3, age_res = "age")
+#' cases <- get_cases(time_res = "daily", spat_res = 1, age_res = "age")
+#' cases <- get_cases(time_res = "daily", spat_res = 3, age_res = "no_age")
 #' }
 #'
 #'
-get_cases <- function(cache_dir = NULL){
+get_cases <- function(time_res = c("daily", "weekly"),
+                      spat_res = c(0, 1, 2, 3),
+                      age_res = c("age", "no_age"),
+                      cache_dir = NULL){
+
+  # check inputs
+  if(!all(c(length(time_res), length(spat_res), length(age_res)) == c(1L, 1L, 1L))){
+    stop("The arguments 'time_res', 'spat_res' and 'age_res' must all be of length 1.")
+  }
+  time_res <- match.arg(time_res)
+  spat_res <- match.arg(spat_res)
+  age_res <- match.arg(age_res)
 
   # set parameters for cacheing
   filename_cases <- "cases.rds"
@@ -29,6 +50,19 @@ get_cases <- function(cache_dir = NULL){
     dat <- get_cases_from_source(cache_dir, filename_cases = filename_cases, filename_deaths = filename_deaths)
   }
 
+  # summarise according to specifications
+  if(time_res != "daily" ||
+     spat_res != 3 ||
+     age_res != "age"){
+    dat <- summarise_data(data = dat,
+                          time_res = time_res,
+                          time_f = time_f_cases,
+                          spat_res = spat_res,
+                          spat_f = spat_f_cases,
+                          age_res = age_res,
+                          age_f = age_f_cases)
+  }
+
   return(dat)
 }
 
@@ -40,21 +74,32 @@ get_cases <- function(cache_dir = NULL){
 #'
 #' @return A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the counts) and \code{lvl3}.
 #'
-#' @importFrom readr read_csv
+#' @importFrom readr read_csv cols_only
 #' @importFrom magrittr %>% set_attr
-#' @importFrom dplyr mutate group_by summarise filter right_join left_join select rename arrange
+#' @importFrom dplyr mutate group_by summarise right_join left_join select rename arrange if_else
 #' @importFrom tidyr expand_grid
 #'
 get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
 
   # get nuts table
-  lk_info <- nuts_table(cache_dir)
+  lk_info <- nuts_table(cache_dir) %>%
+    dplyr::select(adm_unit, lvl3) %>%
+    dplyr::mutate(adm_unit = as.integer(adm_unit))
 
   # Get cases data set from RKI via ESRI
-  rki_data <- "https://www.arcgis.com/sharing/rest/content/items/f10774f1c63e40168479a1feb6c7ca74/data" %>%
+  rki_data <- "https://opendata.arcgis.com/api/v3/datasets/e408ccf8878541a7ab6f6077a42fd811_0/downloads/data?format=csv&spatialRefId=4326" %>%
+    #"~/Downloads/RKI_COVID-19.csv" %>%
     readr::read_csv(col_names = TRUE,
+                    col_types = readr::cols_only(
+                      IdLandkreis = "i",
+                      Altersgruppe = "c",
+                      Meldedatum = "c",
+                      NeuerFall = "i",
+                      NeuerTodesfall = "i",
+                      AnzahlFall = "i",
+                      AnzahlTodesfall = "i",
+                      Datenstand = "c"),
                     trim_ws = TRUE,
-                    col_types = "----c-iicccnn-----",
                     progress = FALSE,
                     show_col_types = FALSE) %>%
     magrittr::set_attr(x = .,
@@ -67,8 +112,6 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
     dplyr::summarise(new_cases = sum(AnzahlFall[NeuerFall >= 0]),
                      new_deaths = sum(AnzahlTodesfall[NeuerTodesfall >= 0]),
                      .groups = "drop") %>%
-    # # filter unknown age groups
-    # dplyr::filter(Altersgruppe != "unbekannt") %>%
     # construct complete time series
     {
       date <- seq(min(.$Meldedatum), max(.$Meldedatum), by = 1)
@@ -87,12 +130,13 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
     dplyr::mutate(new_cases = dplyr::if_else(is.na(new_cases), 0L, new_cases),
                   new_deaths = dplyr::if_else(is.na(new_deaths), 0L, new_deaths)) %>%
     # join NUTS IDs
-    dplyr::left_join(y = lk_info %>% dplyr::select(adm_unit, lvl3),
-                     by = c("IdLandkreis" = "adm_unit")) %>%
+    dplyr::left_join(y = lk_info, by = c("IdLandkreis" = "adm_unit")) %>%
     # prettify
     dplyr::select(-IdLandkreis) %>%
-    dplyr::rename(date = Meldedatum, age = Altersgruppe) %>%
-    dplyr::arrange(lvl3, date, age)
+    dplyr::rename(date = Meldedatum,
+                  age = Altersgruppe,
+                  region = lvl3) %>%
+    dplyr::arrange(region, date, age)
 
   # save this
   cases <- rki_data %>%
