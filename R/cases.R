@@ -31,7 +31,7 @@ get_cases <- function(time_res = c("daily", "weekly"),
     stop("The arguments 'time_res', 'spat_res' and 'age_res' must all be of length 1.")
   }
   time_res <- match.arg(time_res)
-  spat_res <- match.arg(spat_res)
+  spat_res <- match.arg(as.character(spat_res), choices = c("0", "1", "2", "3")) %>% as.numeric()
   age_res <- match.arg(age_res)
 
   # set parameters for cacheing
@@ -86,6 +86,9 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
     dplyr::select(adm_unit, lvl3) %>%
     dplyr::mutate(adm_unit = as.integer(adm_unit))
 
+  ### Change order a bit <- join NUTS correspondence early on and then use these to summarise
+
+
   # Get cases data set from RKI via ESRI
   rki_data <- "https://opendata.arcgis.com/api/v3/datasets/e408ccf8878541a7ab6f6077a42fd811_0/downloads/data?format=csv&spatialRefId=4326" %>%
     #"~/Downloads/RKI_COVID-19.csv" %>%
@@ -108,31 +111,31 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
     dplyr::mutate(Meldedatum = as.Date(gsub("\\s.+$", "", Meldedatum), format = "%Y/%m/%d"),
                   Altersgruppe = gsub("A", "", Altersgruppe),
                   Altersgruppe = ifelse(Altersgruppe == "unbekannt", "unknown", Altersgruppe)) %>%
-    dplyr::group_by(Altersgruppe, Meldedatum, IdLandkreis) %>%
+    # join NUTS IDs and get rid of the Landkreis ID
+    dplyr::left_join(lk_info, by = c("IdLandkreis" = "adm_unit")) %>%
+    dplyr::select(-IdLandkreis) %>%
+    dplyr::group_by(Altersgruppe, Meldedatum, lvl3) %>%
     dplyr::summarise(new_cases = sum(AnzahlFall[NeuerFall >= 0]),
                      new_deaths = sum(AnzahlTodesfall[NeuerTodesfall >= 0]),
                      .groups = "drop") %>%
     # construct complete time series
     {
       date <- seq(min(.$Meldedatum), max(.$Meldedatum), by = 1)
-      lkid <- unique(.$IdLandkreis)
+      lkid <- unique(.$lvl3)
       lkid <- lkid[order(lkid)]
       agegrp <- unique(.$Altersgruppe)
       agegrp <- agegrp[order(agegrp)]
       dplyr::right_join(., y = tidyr::expand_grid("Meldedatum" = date,
-                                                  "IdLandkreis" = lkid,
+                                                  "lvl3" = lkid,
                                                   "Altersgruppe" = agegrp),
-                        by = c("IdLandkreis" = "IdLandkreis",
+                        by = c("lvl3" = "lvl3",
                                "Meldedatum" = "Meldedatum",
                                "Altersgruppe" = "Altersgruppe"))
     } %>%
     # fill NAs
     dplyr::mutate(new_cases = dplyr::if_else(is.na(new_cases), 0L, new_cases),
                   new_deaths = dplyr::if_else(is.na(new_deaths), 0L, new_deaths)) %>%
-    # join NUTS IDs
-    dplyr::left_join(y = lk_info, by = c("IdLandkreis" = "adm_unit")) %>%
     # prettify
-    dplyr::select(-IdLandkreis) %>%
     dplyr::rename(date = Meldedatum,
                   age = Altersgruppe,
                   region = lvl3) %>%
