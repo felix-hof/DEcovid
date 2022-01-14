@@ -181,6 +181,8 @@ utils::globalVariables(c(
   # area_size.R
   "lvl3_name", "landuse",
   # aggregation_functions.R
-  "region"
+  "region",
+  # fit_models.R
+  "name"
 ))
 
