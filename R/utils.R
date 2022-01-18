@@ -183,6 +183,9 @@ utils::globalVariables(c(
   # aggregation_functions.R
   "region",
   # fit_models.R
-  "name"
+  "name",
+  # variants.R
+  "country_code", "year_week", "valid_denominator", "number_sequenced", "number_detections_variant",
+  "variant"
 ))
 
