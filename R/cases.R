@@ -21,18 +21,18 @@
 #' }
 #'
 #'
-get_cases <- function(time_res = c("daily", "weekly"),
-                      spat_res = c(0, 1, 2, 3),
-                      age_res = c("age", "no_age"),
+get_cases <- function(time_res = "daily",
+                      spat_res = 3,
+                      age_res = "age",
                       cache_dir = NULL){
 
   # check inputs
   if(!all(c(length(time_res), length(spat_res), length(age_res)) == c(1L, 1L, 1L))){
     stop("The arguments 'time_res', 'spat_res' and 'age_res' must all be of length 1.")
   }
-  time_res <- match.arg(time_res)
-  spat_res <- match.arg(as.character(spat_res), choices = c("0", "1", "2", "3")) %>% as.numeric()
-  age_res <- match.arg(age_res)
+  time_res <- match.arg(time_res, choices = c("daily", "weekly"), several.ok = FALSE)
+  spat_res <- match.arg(as.character(spat_res), choices = as.character(0:3), several.ok = FALSE) %>% as.integer()
+  age_res <- match.arg(age_res, choices = c("age", "no_age"), several.ok = FALSE)
 
   # set parameters for cacheing
   filename_cases <- "cases.rds"
@@ -51,9 +51,7 @@ get_cases <- function(time_res = c("daily", "weekly"),
   }
 
   # summarise according to specifications
-  if(time_res != "daily" ||
-     spat_res != 3 ||
-     age_res != "age"){
+  if(time_res != "daily" || spat_res != 3 || age_res != "age"){
     dat <- summarise_data(data = dat,
                           time_res = time_res,
                           time_f = time_f_cases,
