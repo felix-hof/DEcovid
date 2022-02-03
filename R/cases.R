@@ -50,6 +50,12 @@ get_cases <- function(time_res = "daily",
     dat <- get_cases_from_source(cache_dir, filename_cases = filename_cases, filename_deaths = filename_deaths)
   }
 
+  # save agegroups (used for neighbourhood matrices)
+  dat %>%
+    pull(age) %>%
+    save_agegroups(age = ., path = make_path(cache_dir, "agegroups.rds"))
+
+
   # summarise according to specifications
   if(time_res != "daily" || spat_res != 3 || age_res != "age"){
     dat <- summarise_data(data = dat,
@@ -62,6 +68,14 @@ get_cases <- function(time_res = "daily",
   }
 
   return(dat)
+}
+
+
+save_agegroups <- function(age, path){
+  start_age <- suppressWarnings(as.numeric(gsub("^(\\d+).*$", "\\1", unique(age))))
+  ages <- start_age[order(start_age, na.last = NA)]
+  saveRDS(ages, file = path)
+  return(invisible(0))
 }
 
 #' Get case data from the source

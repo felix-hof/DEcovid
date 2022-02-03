@@ -4,12 +4,7 @@
 \alias{get_cases}
 \title{Get the case data from RKI repository}
 \usage{
-get_cases(
-  time_res = c("daily", "weekly"),
-  spat_res = c(0, 1, 2, 3),
-  age_res = c("age", "no_age"),
-  cache_dir = NULL
-)
+get_cases(time_res = "daily", spat_res = 3, age_res = "age", cache_dir = NULL)
 }
 \arguments{
 \item{time_res}{A \code{character} vector of length 1 indicating the temporal resolution of the data.
