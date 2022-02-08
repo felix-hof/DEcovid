@@ -104,13 +104,13 @@ summarise_temp_to_region <- function(temperature, tol, nb_pattern, cache_dir){
         dplyr::group_by(date) %>%
         dplyr::summarise(temperature = mean(temperature)) %>%
         # add region and rename
-        dplyr::mutate(lvl3 = geoms$NUTS_ID[x]) %>%
+        dplyr::mutate(lvl3 = geoms$region[x]) %>%
         dplyr::rename(value = temperature)
     } else {
       return(NA)
     }
   })
-  names(temp_list) <- geoms$NUTS_ID
+  names(temp_list) <- geoms$region
 
   # if there are regions that have no station within the tolerance
   # compute spatial neighbourhood and take mean of neighbours
