@@ -30,7 +30,7 @@ get_geoms <- function(cache_dir = NULL){
   # add color indices
   colors <- get_map_colors(geoms = dat, cache_dir = cache_dir)
   dat <- lapply(seq_along(dat), function(x){
-    dplyr::left_join(x = dat[[x]], y = colors[[x]], by = c("NUTS_ID" = "region"))
+    dplyr::left_join(x = dat[[x]], y = colors[[x]], by = "region")
   })
 
   return(dat)
@@ -85,25 +85,27 @@ process_shapefiles <- function(cache_dir, filename){
       dplyr::filter(., NUTS_ID != "DEG0N")
     } %>%
     # Keep only those needed
-    dplyr::filter(grepl("^DE|^DK$|^PL$|^CZ$|^AT$|^CH$|^FR$|^LU$|^BE$|^NL$", NUTS_ID))
+    dplyr::filter(grepl("^DE|^DK$|^PL$|^CZ$|^AT$|^CH$|^FR$|^LU$|^BE$|^NL$", NUTS_ID)) %>%
+    # Rename column
+    dplyr::rename(region = NUTS_ID)
 
   # save German region geoms
   de_geoms <- areas %>%
-    dplyr::filter(grepl("^DE", NUTS_ID)) %>%
-    dplyr::arrange(NUTS_ID)
+    dplyr::filter(grepl("^DE", region)) %>%
+    dplyr::arrange(region)
 
   # save neighbour country geoms
   neighbour_geoms <- areas %>%
     # keep only neighbouring countries
-    dplyr::filter(NUTS_ID %in% c("DK", "PL", "CZ", "AT", "CH", "FR", "LU", "BE", "NL")) %>%
-    dplyr::arrange(NUTS_ID)
+    dplyr::filter(region %in% c("DK", "PL", "CZ", "AT", "CH", "FR", "LU", "BE", "NL")) %>%
+    dplyr::arrange(region)
 
   # create out object
   out_obj <- list(
-    nuts_0 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 2),
-    nuts_1 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 3),
-    nuts_2 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 4),
-    nuts_3 = de_geoms %>% dplyr::filter(nchar(NUTS_ID) == 5),
+    nuts_0 = de_geoms %>% dplyr::filter(nchar(region) == 2),
+    nuts_1 = de_geoms %>% dplyr::filter(nchar(region) == 3),
+    nuts_2 = de_geoms %>% dplyr::filter(nchar(region) == 4),
+    nuts_3 = de_geoms %>% dplyr::filter(nchar(region) == 5),
     neighbours = neighbour_geoms)
 
   # save this to disk
