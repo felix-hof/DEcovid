@@ -28,6 +28,7 @@ Imports:
     rvest,
     rlang,
     MapColoring,
-    units
+    units,
+    stats
 Remotes:
     github::hunzikp/MapColoring
