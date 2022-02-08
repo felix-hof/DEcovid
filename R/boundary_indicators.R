@@ -51,10 +51,10 @@ get_boundary_inds_from_source <- function(cache_dir, filename){
 
   # get geometries and filter them
   de_geom <- get_geoms()[[1]] %>%
-    dplyr::filter(nchar(NUTS_ID) == 5) %>%
-    dplyr::arrange(NUTS_ID)
+    dplyr::filter(nchar(region) == 5) %>%
+    dplyr::arrange(region)
   neigh_geom <- get_geoms()[[2]] %>%
-    dplyr::arrange(NUTS_ID)
+    dplyr::arrange(region)
 
   # get which region neighbours what country
   nb_list <- sf::st_relate(de_geom,
@@ -62,14 +62,14 @@ get_boundary_inds_from_source <- function(cache_dir, filename){
                            pattern = nb_pattern)
 
   # make covariates (select each neighbour country and each lvl3 region, then join join_object)
-  dat <- purrr::map_dfc(seq_along(neigh_geom$NUTS_ID), function(x){
+  dat <- purrr::map_dfc(seq_along(neigh_geom$region), function(x){
     purrr::map_int(nb_list, function(y){
       if(x %in% y) 1L else 0L
     }) %>%
-      {dplyr::tibble(!!as.symbol(neigh_geom$NUTS_ID[x]) := .)}
+      {dplyr::tibble(!!as.symbol(neigh_geom$region[x]) := .)}
   }) %>%
     dplyr::mutate(ALL = ifelse(rowSums(dplyr::across()) > 0L, 1L, 0L),
-                  lvl3 = de_geom$NUTS_ID) %>%
+                  lvl3 = de_geom$region) %>%
     {
       namecol <- grep("lvl3", colnames(.))
       lapply(seq_along(.)[-namecol], function(x){
@@ -77,7 +77,7 @@ get_boundary_inds_from_source <- function(cache_dir, filename){
           dplyr::rename(value = 1)
       })
     }
-  names(dat) <- c(neigh_geom$NUTS_ID, "ALL")
+  names(dat) <- c(neigh_geom$region, "ALL")
 
   # save this
   saveRDS(dat, file = make_path(cache_dir, filename))
