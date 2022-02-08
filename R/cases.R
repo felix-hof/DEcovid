@@ -50,10 +50,13 @@ get_cases <- function(time_res = "daily",
     dat <- get_cases_from_source(cache_dir, filename_cases = filename_cases, filename_deaths = filename_deaths)
   }
 
-  # save agegroups (used for neighbourhood matrices)
+  # save agegroups and regions (used for neighbourhood matrices)
   dat %>%
     pull(age) %>%
     save_agegroups(age = ., path = make_path(cache_dir, "agegroups.rds"))
+  dat %>%
+    pull(region) %>%
+    save_regions(regions = ., prefix = "case_regions_", cache_dir = cache_dir)
 
 
   # summarise according to specifications
@@ -71,10 +74,23 @@ get_cases <- function(time_res = "daily",
 }
 
 
+# Function to save all age groups that start with a sequence of digits (needed for nb matrices)
 save_agegroups <- function(age, path){
-  start_age <- suppressWarnings(as.numeric(gsub("^(\\d+).*$", "\\1", unique(age))))
-  ages <- start_age[order(start_age, na.last = NA)]
+  age <- unique(age)
+  start_age <- suppressWarnings(as.numeric(gsub("^(\\d+).*$", "\\1", age)))
+  ages <- age[order(start_age, na.last = NA)]
   saveRDS(ages, file = path)
+  return(invisible(0))
+}
+
+# Function to save all NUTS regions of all levels within the data set (needed for nb matrices)
+save_regions <- function(regions, prefix, cache_dir){
+  regions <- unique(regions)
+  vapply(0:3, function(x){ # loop over NUTS levels
+    out <- unique(substr(regions, start = 1, stop = x + 2))
+    saveRDS(out, file = make_path(cache_dir, paste0(prefix, x,".rds")))
+    return(0L)
+  }, integer(1L))
   return(invisible(0))
 }
 
