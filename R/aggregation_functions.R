@@ -3,6 +3,36 @@ time_f_cases <- sum
 spat_f_cases <- sum
 age_f_cases <- sum
 
+# area_size
+time_f_area_size <- function(x){x[!is.na(x)][1]}
+spat_f_area_size <- sum
+age_f_area_size <- function(x){x[!is.na(x)][1]}
+
+# holidays
+time_f_holidays <- sum
+spat_f_holidays <- function(x) sum(x, na.rm = TRUE) / length(x)
+age_f_holidays <- function(x){x[!is.na(x)][1]}
+
+# vaccination
+time_f_vaccination <- function(x) log(mean(exp(x), na.rm = TRUE))
+spat_f_vaccination <- function(x) x[!is.na(x)][1]
+age_f_vaccination <- function(x) x[!is.na(x)][1]
+
+# testing
+time_f_testing <- function(x) mean(x, na.rm = TRUE)
+spat_f_testing <- function(x) x[!is.na(x)][1]
+age_f_testing <- function(x) x[!is.na(x)][1]
+
+# stringency
+time_f_stringency <- function(x) mean(x, na.rm = TRUE)
+spat_f_stringency <- function(x) x[!is.na(x)][1]
+age_f_stringency <- function(x) x[!is.na(x)][1]
+
+# population
+time_f_population <- function(x) x[!is.na(x)][1]
+spat_f_population <- sum
+age_f_population <- sum
+
 #' Aggregate data sets across time, space and age groups
 #'
 #' @param data A \code{tibble} with columns \code{region}, \code{date}, \code{age} and \code{value}
@@ -29,10 +59,14 @@ summarise_data <- function(data,
     # aggregate by region
     {
       if(spat_res != 3){
-        .[] %>%
-          dplyr::mutate(region = substr(region, 1, spat_res + 2)) %>%
-          dplyr::group_by(dplyr::across(c(-value))) %>%
-          dplyr::summarise(value = spat_f(value), .groups = "drop")
+        if(nchar(.$region[1]) > spat_res + 2L){
+          .[] %>%
+            dplyr::mutate(region = substr(region, 1, spat_res + 2)) %>%
+            dplyr::group_by(dplyr::across(c(-value))) %>%
+            dplyr::summarise(value = spat_f(value), .groups = "drop")
+        } else {
+          .
+        }
       } else {
         .
       }
@@ -40,11 +74,15 @@ summarise_data <- function(data,
     # aggregate by time
     {
       if(time_res != "daily"){
-        .[] %>%
-          dplyr::mutate(date = gsub("-\\d$", "-4", ISOweek::date2ISOweek(date))) %>%
-          dplyr::group_by(dplyr::across(c(-value))) %>%
-          dplyr::summarise(value = time_f(value), .groups = "drop") %>%
-          dplyr::mutate(date = ISOweek::ISOweek2date(date))
+        if(all(diff(unique(.$date)) == 7L)){
+          .
+        } else {
+          .[] %>%
+            dplyr::mutate(date = gsub("-\\d$", "-4", ISOweek::date2ISOweek(date))) %>%
+            dplyr::group_by(dplyr::across(c(-value))) %>%
+            dplyr::summarise(value = time_f(value), .groups = "drop") %>%
+            dplyr::mutate(date = ISOweek::ISOweek2date(date))
+        }
       } else {
         .
       }
@@ -52,10 +90,14 @@ summarise_data <- function(data,
     # aggregate by age
     {
       if(age_res != "age"){
-        .[] %>%
-          dplyr::mutate(age = "total") %>%
-          dplyr::group_by(dplyr::across(c(-value))) %>%
-          dplyr::summarise(value = age_f(value), .groups = "drop")
+        if(length(unique(.$age)) != 1L){
+          .[] %>%
+            dplyr::mutate(age = "total") %>%
+            dplyr::group_by(dplyr::across(c(-value))) %>%
+            dplyr::summarise(value = age_f(value), .groups = "drop")
+        } else {
+          .
+        }
       } else {
         .
       }

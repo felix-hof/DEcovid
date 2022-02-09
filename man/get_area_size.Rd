@@ -4,9 +4,23 @@
 \alias{get_area_size}
 \title{Get area_size from cache or source}
 \usage{
-get_area_size(cache_dir = NULL)
+get_area_size(
+  time_res = NULL,
+  spat_res = NULL,
+  age_res = NULL,
+  cache_dir = NULL
+)
 }
 \arguments{
+\item{time_res}{A \code{character} vector of length 1 indicating the temporal resolution of the data.
+Accepted values are either \code{"daily"} or \code{"weekly"}.}
+
+\item{spat_res}{A \code{numeric} vector of length 1 indicating the spatial resolution of the data.
+Accepted values are \code{0}, \code{1}, \code{2} and \code{3}. Corresponds to the respective NUTS level.}
+
+\item{age_res}{A \code{character} vector of length 1 indicating whether or not the data should be stratified by
+age groups. Accepted values are \code{"age"} and \code{"no_age"}.}
+
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.
 The desired cache directory is determined according to the following hierarchy:
@@ -31,5 +45,6 @@ Get area_size from cache or source
 }
 \examples{
 area_size <- get_area_size()
+area_size <- get_area_size(time_res = "daily", spat_res = 1, age_res = "no_age")
 
 }

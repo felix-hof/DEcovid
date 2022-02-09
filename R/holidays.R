@@ -1,14 +1,31 @@
 #' Get holiday data from appfield.net or from cache
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{tibble} with columns \code{date}, \code{lvl3} and \code{value} (contains the binary holiday indicator).
+#'
+#' @importFrom ISOweek ISOweek2date date2ISOweek
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate group_by summarise
+#' @importFrom tidyr expand_grid
+#'
 #' @export
 #'
 #' @examples
 #' holidays <- get_holidays()
 #'
-get_holidays <- function(cache_dir = NULL){
+get_holidays <- function(time_res = NULL,
+                         spat_res = NULL,
+                         age_res = NULL,
+                         cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "holidays.rds"
@@ -23,6 +40,18 @@ get_holidays <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_holidays_from_source(cache_dir, filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      left_join(y = dat, by = c("date", "region")) %>%
+      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                     time_f = time_f_holidays, spat_f = spat_f_holidays, age_f = age_f_holidays)
   }
 
   return(dat)
@@ -108,7 +137,8 @@ get_holidays_from_source <- function(cache_dir, filename){
     dplyr::mutate(lvl1 = substr(lvl3, 1, 3)) %>%
     dplyr::left_join(hols, by = c("date" = "date", "lvl1" = "region")) %>%
     dplyr::select(date, lvl3, value) %>%
-    dplyr::arrange(lvl3, date)
+    dplyr::arrange(lvl3, date) %>%
+    dplyr::rename(region = lvl3)
 
   # save this
   saveRDS(dat, file = make_path(cache_dir, filename))

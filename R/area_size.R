@@ -1,15 +1,32 @@
 #' Get area_size from cache or source
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{tibble} with columns \code{lvl3} and \code{value}. The column \code{value} contains the
 #' area size for each NUTS 3 region.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr left_join
+#' @importFrom tidyr expand_grid
+#'
 #' @export
 #'
 #' @examples
 #' area_size <- get_area_size()
+#' area_size <- get_area_size(time_res = "daily", spat_res = 1, age_res = "no_age")
 #'
-get_area_size <- function(cache_dir = NULL){
+get_area_size <- function(time_res = NULL,
+                          spat_res = NULL,
+                          age_res = NULL,
+                          cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "area_size.rds"
@@ -24,6 +41,18 @@ get_area_size <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_area_size_from_source(cache_dir, filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      dplyr::left_join(y = dat, by = "region") %>%
+      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                     time_f = time_f_area_size, spat_f = spat_f_area_size, age_f = age_f_area_size)
   }
 
   return(dat)
@@ -63,11 +92,11 @@ get_area_size_from_source <- function(cache_dir, filename){
     dplyr::mutate(geo = replace(geo, geo == "DEG0N", "DEG0P")) %>%
     dplyr::group_by(geo) %>%
     dplyr::summarise(value = sum(value)) %>%
-    dplyr::rename(lvl3 = geo) %>%
-    dplyr::arrange(lvl3) %>%
-    dplyr::filter(lvl3 %in% ref$lvl3)
+    dplyr::rename(region = geo) %>%
+    dplyr::arrange(region) %>%
+    dplyr::filter(region %in% ref$lvl3)
 
-  if(length(setdiff(dat$lvl3, ref$lvl3)) != 0 || length(setdiff(ref$lvl3, dat$lvl3)) != 0){
+  if(length(setdiff(dat$region, ref$lvl3)) != 0 || length(setdiff(ref$lvl3, dat$region)) != 0){
     stop("The NUTS regions from Eurostat and the ones we use in the thesis are not the same.", fill = TRUE)
   }
 

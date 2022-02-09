@@ -1,14 +1,30 @@
 #' Get the proportion of unvaccinated people from impfdashboard.de or from cache
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{tibble} with columns \code{date} and \code{value} (contains log-proportion of unvaccinated people).
+#'
+#' @importFrom tidyr expand_grid
+#' @importFrom magrittr %>%
+#' @importFrom dplyr left_join
+#'
 #' @export
 #'
 #' @examples
 #' vaccination <- get_vaccination()
 #'
-get_vaccination <- function(cache_dir = NULL){
+get_vaccination <- function(time_res = NULL,
+                            spat_res = NULL,
+                            age_res = NULL,
+                            cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "vaccination.rds"
@@ -23,6 +39,18 @@ get_vaccination <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_vaccination_from_source(cache_dir, filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      dplyr::left_join(y = dat, by = "date") %>%
+      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                     time_f = time_f_vaccination, spat_f = spat_f_vaccination, age_f = age_f_vaccination)
   }
 
   return(dat)
@@ -41,7 +69,7 @@ get_vaccination <- function(cache_dir = NULL){
 get_vaccination_from_source <- function(cache_dir, filename){
 
   # get population data to calculate rate
-  total_population <- sum(get_population(cache_dir)$value)
+  total_population <- sum(get_population(cache_dir = cache_dir)$value)
 
   # get data
   dat <- "https://impfdashboard.de/static/data/germany_vaccinations_timeseries_v2.tsv" %>%

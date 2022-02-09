@@ -152,6 +152,63 @@ eurostat_query <- function(dataset, args){
   }
 }
 
+#' Get the dates, age groups and regions present in the case data set
+#'
+#' @param spat_res The NUTS level on which to return the regions present in the case data set.
+#' @param time_res The time resolution on which to return the dates present in the case data set.
+#' @template cache_dir
+#'
+#' @return A \code{list} containing regions, age groups, and dates present in the case data set.
+#'
+get_case_info <- function(spat_res, time_res, cache_dir){
+  if(all(file.exists(make_path(cache_dir,
+                               c("agegroups.rds",
+                                 paste0("case_regions_", spat_res, ".rds"),
+                                 paste0("case_dates_", time_res, ".rds"))
+                               )))){
+    agegroups <- readRDS(make_path(cache_dir, "agegroups.rds"))
+    regions <- readRDS(make_path(cache_dir, paste0("case_regions_", spat_res, ".rds")))
+    dates <- readRDS(make_path(cache_dir, paste0("case_dates_", time_res, ".rds")))
+  } else {
+    get_cases(cache_dir = cache_dir)
+    agegroups <- readRDS(make_path(cache_dir, "agegroups.rds"))
+    regions <- readRDS(make_path(cache_dir, paste0("case_regions_", spat_res, ".rds")))
+    dates <- readRDS(make_path(cache_dir, paste0("case_dates_", time_res, ".rds")))
+  }
+  return(list(date = dates, age = agegroups, region = regions))
+}
+
+# check resolution arguments
+check_res_args <- function(spat_res, age_res, time_res){
+
+  argsisnull <- vapply(list(spat_res, age_res, time_res), is.null, logical(1L))
+  arglengths <- vapply(list(spat_res, age_res, time_res), length, integer(1L))
+
+  if(!all(argsisnull + arglengths == 1L)){
+    stop("Each of the arguments 'spat_res', 'age_res', and 'time_res' must be either NULL or length 1.")
+  }
+
+  if(!(any(c(sum(argsisnull), sum(arglengths)) %in% c(0L, 3L)))){
+    stop("Arguments 'time_res', 'spat_res', and 'age_res' must be either all NULL or all non-NULL.")
+  }
+
+  if(!all(argsisnull)){
+    if(!(spat_res %in% 0L:3L)){
+      stop("Invalid argument 'spat_res'. The argument 'spat_res' must be one of c(0, 1, 2, 3).")
+    }
+
+    if(!(age_res %in% c("age", "no_age"))){
+      stop("Invalid argument 'age_res'. The argument 'age_res' must be one of c(\"age\", \"no_age\").")
+    }
+
+    if(!(time_res %in% c("daily", "weekly"))){
+      stop("Invalid argument 'time_res'. The argument 'time_res' must be one of c(\"daily\", \"weekly\").")
+    }
+  }
+
+  return(c("join" = !all(argsisnull)))
+}
+
 # Handle global variables for R CMD check ----
 
 utils::globalVariables(c(
@@ -169,17 +226,17 @@ utils::globalVariables(c(
   # temperature.R
   "CN", "LAT", "LON", "ts", "DATE", "TG", "n_na",
   # stringency.R
-  "CountryCode", "Date", "StringencyIndex", "value",
+  "CountryCode", "Date", "StringencyIndex", "value", "join",
   # urbanicity.R
   "Bevoelkerung", "Land", "RB", "Kreis", "Gemeindename", "population", "value",
   # vaccination.R
-  "personen_erst_kumulativ", "unvac", "log_unvac",
+  "personen_erst_kumulativ", "unvac", "log_unvac", "join",
   # holidays.R
-  "lvl1_name", "holiday",
+  "lvl1_name", "holiday", "join",
   # testing.R
-  "week", "ntests", "trate",
+  "week", "ntests", "trate", "join",
   # area_size.R
-  "lvl3_name", "landuse",
+  "lvl3_name", "landuse", "join",
   # aggregation_functions.R
   "region",
   # fit_models.R

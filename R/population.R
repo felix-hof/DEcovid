@@ -1,13 +1,29 @@
 #' Get population by age and NUTS-3 level
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{tibble} with columns \code{lvl3}, \code{age}, and \code{values}. The column \code{values} contains the population counts.
+#'
+#' @importFrom tidyr expand_grid
+#' @importFrom magrittr %>%
+#' @importFrom dplyr left_join
+#'
 #' @export
 #'
 #' @examples
 #' population <- get_population()
-get_population <- function(cache_dir = NULL){
+get_population <- function(time_res = NULL,
+                           spat_res = NULL,
+                           age_res = NULL,
+                           cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "population.rds"
@@ -22,6 +38,18 @@ get_population <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_population_from_source(cache_dir, filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      dplyr::left_join(y = dat, by = c("region", "age")) %>%
+      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                     time_f = time_f_population, spat_f = spat_f_population, age_f = age_f_population)
   }
 
   return(dat)
@@ -80,12 +108,12 @@ get_population_from_source <- function(cache_dir, filename){
     #                                          age = unique(.$age),
     #                                          lvl3 = unique(.$geo)),
     #                   by = c("geo" = "lvl3", "age" = "age")) %>%
-    dplyr::rename(lvl3 = geo, value = values) %>%
+    dplyr::rename(region = geo, value = values) %>%
     {
       if(any(is.na(.$value))) stop("Error in construction of population.")
       .
     } %>%
-    dplyr::arrange(lvl3, age)
+    dplyr::arrange(region, age)
 
   # save this
   saveRDS(dat, file = make_path(cache_dir, filename))

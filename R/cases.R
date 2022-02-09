@@ -1,11 +1,8 @@
 #' Get the case data from RKI repository
 #'
-#' @param time_res A \code{character} vector of length 1 indicating the temporal resolution of the data.
-#' Accepted values are either \code{"daily"} or \code{"weekly"}.
-#' @param spat_res A \code{numeric} vector of length 1 indicating the spatial resolution of the data.
-#' Accepted values are \code{0}, \code{1}, \code{2} and \code{3}. Corresponds to the respective NUTS level.
-#' @param age_res A \code{character} vector of length 1 indicating whether or not the data should be stratified by
-#' age groups. Accepted values are \code{"age"} and \code{"no_age"}.
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the counts) and \code{region}.
@@ -27,12 +24,9 @@ get_cases <- function(time_res = "daily",
                       cache_dir = NULL){
 
   # check inputs
-  if(!all(c(length(time_res), length(spat_res), length(age_res)) == c(1L, 1L, 1L))){
-    stop("The arguments 'time_res', 'spat_res' and 'age_res' must all be of length 1.")
-  }
-  time_res <- match.arg(time_res, choices = c("daily", "weekly"), several.ok = FALSE)
-  spat_res <- match.arg(as.character(spat_res), choices = as.character(0:3), several.ok = FALSE) %>% as.integer()
-  age_res <- match.arg(age_res, choices = c("age", "no_age"), several.ok = FALSE)
+  check_res_args(time_res = time_res,
+                 spat_res = spat_res,
+                 age_res = age_res)
 
   # set parameters for cacheing
   filename_cases <- "cases.rds"
@@ -50,13 +44,19 @@ get_cases <- function(time_res = "daily",
     dat <- get_cases_from_source(cache_dir, filename_cases = filename_cases, filename_deaths = filename_deaths)
   }
 
-  # save agegroups and regions (used for neighbourhood matrices)
+  # save agegroups, regions and dates (used for neighbourhood matrices and truncating the timeframe)
   dat %>%
-    pull(age) %>%
+    dplyr::pull(age) %>%
     save_agegroups(age = ., path = make_path(cache_dir, "agegroups.rds"))
   dat %>%
-    pull(region) %>%
+    dplyr::pull(region) %>%
     save_regions(regions = ., prefix = "case_regions_", cache_dir = cache_dir)
+  dat %>%
+    dplyr::pull(date) %>%
+    save_dates(dates = .,
+               file_daily = "case_dates_daily.rds",
+               file_weekly = "case_dates_weekly.rds",
+               cache_dir = cache_dir)
 
 
   # summarise according to specifications
@@ -91,6 +91,16 @@ save_regions <- function(regions, prefix, cache_dir){
     saveRDS(out, file = make_path(cache_dir, paste0(prefix, x,".rds")))
     return(0L)
   }, integer(1L))
+  return(invisible(0))
+}
+
+# Function to save all dates within the data set (needed to truncate the data sets)
+#' @importFrom ISOweek date2ISOweek ISOweek2date
+save_dates <- function(dates, file_daily, file_weekly, cache_dir){
+  dates <- sort(unique(dates), decreasing = FALSE)
+  dates_w <- ISOweek::ISOweek2date(unique(gsub("\\d$", "4", ISOweek::date2ISOweek(dates))))
+  saveRDS(dates, file = make_path(cache_dir, file_daily))
+  saveRDS(dates_w, file = make_path(cache_dir, file_weekly))
   return(invisible(0))
 }
 

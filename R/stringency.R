@@ -1,15 +1,31 @@
 #' Get stringency index from cache or source
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{tibble} with columns \code{date} and \code{value}. The column \code{value} contains the
 #' stringency index for each day.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr left_join
+#' @importFrom tidyr expand_grid
+#'
 #' @export
 #'
 #' @examples
 #' stringency <- get_stringency()
 #'
-get_stringency <- function(cache_dir = NULL){
+get_stringency <- function(time_res = NULL,
+                           spat_res = NULL,
+                           age_res = NULL,
+                           cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "stringency.rds"
@@ -24,6 +40,18 @@ get_stringency <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_stringency_from_source(cache_dir, filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      dplyr::left_join(y = dat, by = "date") %>%
+      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                     time_f = time_f_stringency, spat_f = spat_f_stringency, age_f = age_f_stringency)
   }
 
   return(dat)
