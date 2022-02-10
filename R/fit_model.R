@@ -13,7 +13,8 @@
 covariate_matrix <- function(data){
 
   # input checks
-  if(any(!grepl("^\\d{2}[-+]\\d*$", data$age))){
+  cond <- all(data$age == "total") || all(grepl("^\\d{2}[-+]\\d*$", data$age))
+  if(!cond){
     stop("There is an unknown age group in the data.")
   }
   if(!all(c("age", "date", "value", "region") %in% colnames(data))){
