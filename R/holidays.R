@@ -7,9 +7,8 @@
 #'
 #' @return A \code{tibble} with columns \code{date}, \code{lvl3} and \code{value} (contains the binary holiday indicator).
 #'
-#' @importFrom ISOweek ISOweek2date date2ISOweek
 #' @importFrom magrittr %>%
-#' @importFrom dplyr mutate group_by summarise
+#' @importFrom dplyr left_join
 #' @importFrom tidyr expand_grid
 #'
 #' @export
@@ -49,7 +48,7 @@ get_holidays <- function(time_res = NULL,
     age <- dims$age
     date <- dims$date
     dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
-      left_join(y = dat, by = c("date", "region")) %>%
+      dplyr::left_join(y = dat, by = c("date", "region")) %>%
       summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
                      time_f = time_f_holidays, spat_f = spat_f_holidays, age_f = age_f_holidays)
   }
