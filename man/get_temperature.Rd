@@ -5,12 +5,24 @@
 \title{Get temperature data set for this thesis}
 \usage{
 get_temperature(
+  time_res = NULL,
+  spat_res = NULL,
+  age_res = NULL,
   complete = c("none", "station", "region"),
   tol = 0,
   cache_dir = NULL
 )
 }
 \arguments{
+\item{time_res}{A \code{character} vector of length 1 indicating the temporal resolution of the data.
+Accepted values are either \code{"daily"} or \code{"weekly"}.}
+
+\item{spat_res}{A \code{numeric} vector of length 1 indicating the spatial resolution of the data.
+Accepted values are \code{0}, \code{1}, \code{2} and \code{3}. Corresponds to the respective NUTS level.}
+
+\item{age_res}{A \code{character} vector of length 1 indicating whether or not the data should be stratified by
+age groups. Accepted values are \code{"age"} and \code{"no_age"}.}
+
 \item{complete}{A \code{character} vector of length 1 which determines the level of processing. If \code{"none"}, returns
 the time series at each station with potential missing data. If \code{"station"}, the potentially missing temperatures are
 completed by averaging the temperatures at the three closest weather stations that have non-missing data available for the

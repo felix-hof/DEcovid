@@ -33,6 +33,11 @@ time_f_population <- function(x) x[!is.na(x)][1]
 spat_f_population <- sum
 age_f_population <- sum
 
+# temperature
+time_f_temperature <- function(x) mean(x, na.rm = TRUE)
+spat_f_temperature <- function(x) mean(x, na.rm = TRUE)
+age_f_temperature <- function(x) x[!is.na(x)][1]
+
 #' Aggregate data sets across time, space and age groups
 #'
 #' @param data A \code{tibble} with columns \code{region}, \code{date}, \code{age} and \code{value}

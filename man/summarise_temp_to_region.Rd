@@ -30,7 +30,7 @@ Afterwards you can just ignore the \code{cache_dir} argument as it always will u
 the options.}
 }
 \value{
-A \code{tibble} with columns \code{lvl3} and \code{ts}. The column \code{ts} is a nested column and
+A \code{tibble} with columns \code{region} and \code{ts}. The column \code{ts} is a nested column and
 contains the temperature time series for the respective NUTS-3 region.
 }
 \description{

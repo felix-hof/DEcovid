@@ -1,5 +1,8 @@
 #' Get temperature data set for this thesis
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @param complete A \code{character} vector of length 1 which determines the level of processing. If \code{"none"}, returns
 #' the time series at each station with potential missing data. If \code{"station"}, the potentially missing temperatures are
 #' completed by averaging the temperatures at the three closest weather stations that have non-missing data available for the
@@ -16,12 +19,28 @@
 #' @export
 #'
 #' @importFrom units set_units
+#' @importFrom magrittr %>%
+#' @importFrom dplyr left_join
+#' @importFrom tidyr unnest expand_grid
 #'
 #' @examples
 #' \dontrun{
 #' temperature <- get_temperature(complete = "station")
 #' }
-get_temperature <- function(complete = c("none", "station", "region"), tol = 0, cache_dir = NULL){
+get_temperature <- function(time_res = NULL,
+                            spat_res = NULL,
+                            age_res = NULL,
+                            complete = c("none", "station", "region"),
+                            tol = 0,
+                            cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
+  if(join){
+    complete = "region"
+  }
 
   # nb_pattern used in this function
   nb_pattern <- "F***1****" # Use "F***T****" if a point where geoms touch is enough for two regions to be neighbours
@@ -64,6 +83,21 @@ get_temperature <- function(complete = c("none", "station", "region"), tol = 0, 
                                             nb_pattern = nb_pattern, cache_dir = cache_dir)
   }
 
+  # aggregate if desired
+  if(join){
+    temperature <- tidyr::unnest(temperature, ts)
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    # print(tidyr::expand_grid(age = age, date = date, region = region))
+    # print(temperature)
+    temperature <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      dplyr::left_join(y = temperature, by = c("date", "region")) %>%
+                         summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                                        time_f = time_f_temperature, spat_f = spat_f_temperature, age_f = age_f_temperature)
+  }
+
   return(temperature)
 }
 
@@ -75,7 +109,7 @@ get_temperature <- function(complete = c("none", "station", "region"), tol = 0, 
 #' @param nb_pattern The neighbourhood pattern that is used to calculate the neighbourhood structure.
 #' @template cache_dir
 #'
-#' @return A \code{tibble} with columns \code{lvl3} and \code{ts}. The column \code{ts} is a nested column and
+#' @return A \code{tibble} with columns \code{region} and \code{ts}. The column \code{ts} is a nested column and
 #' contains the temperature time series for the respective NUTS-3 region.
 #'
 #' @importFrom sf st_distance st_drop_geometry st_relate
@@ -104,7 +138,7 @@ summarise_temp_to_region <- function(temperature, tol, nb_pattern, cache_dir){
         dplyr::group_by(date) %>%
         dplyr::summarise(temperature = mean(temperature)) %>%
         # add region and rename
-        dplyr::mutate(lvl3 = geoms$region[x]) %>%
+        dplyr::mutate(region = geoms$region[x]) %>%
         dplyr::rename(value = temperature)
     } else {
       return(NA)
@@ -131,8 +165,8 @@ summarise_temp_to_region <- function(temperature, tol, nb_pattern, cache_dir){
         dplyr::bind_rows() %>%
         dplyr::group_by(date) %>%
         dplyr::summarise(value = mean(value), .groups = "drop") %>%
-        dplyr::mutate(lvl3 = names(temp_list)[i]) %>%
-        dplyr::select(date, value, lvl3) %>%
+        dplyr::mutate(region = names(temp_list)[i]) %>%
+        dplyr::select(date, value, region) %>%
         dplyr::arrange(date)
     })
   }
