@@ -25,7 +25,7 @@ the options.}
 \item{filename}{The name of the file where population data is stored.}
 }
 \value{
-A \code{tibble} with columns \code{lvl3} and \code{value}. Column \code{lvl3} contains NUTS 3 districts,
+A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS 3 districts,
 whereas column \code{value} contains the log-population of the largest city within the respective district.
 }
 \description{

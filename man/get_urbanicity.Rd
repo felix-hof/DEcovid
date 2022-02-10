@@ -4,9 +4,23 @@
 \alias{get_urbanicity}
 \title{Get urbanicity index by NUTS-3 level}
 \usage{
-get_urbanicity(cache_dir = NULL)
+get_urbanicity(
+  time_res = NULL,
+  spat_res = NULL,
+  age_res = NULL,
+  cache_dir = NULL
+)
 }
 \arguments{
+\item{time_res}{A \code{character} vector of length 1 indicating the temporal resolution of the data.
+Accepted values are either \code{"daily"} or \code{"weekly"}.}
+
+\item{spat_res}{A \code{numeric} vector of length 1 indicating the spatial resolution of the data.
+Accepted values are \code{0}, \code{1}, \code{2} and \code{3}. Corresponds to the respective NUTS level.}
+
+\item{age_res}{A \code{character} vector of length 1 indicating whether or not the data should be stratified by
+age groups. Accepted values are \code{"age"} and \code{"no_age"}.}
+
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.
 The desired cache directory is determined according to the following hierarchy:
@@ -23,7 +37,7 @@ Afterwards you can just ignore the \code{cache_dir} argument as it always will u
 the options.}
 }
 \value{
-A \code{tibble} with columns \code{lvl3} and \code{value}. Column \code{lvl3} contains NUTS 3 districts,
+A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS 3 districts,
 whereas column \code{value} contains the log-population of the largest city within the respective district.
 }
 \description{

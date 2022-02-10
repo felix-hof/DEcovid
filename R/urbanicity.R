@@ -1,14 +1,30 @@
 #' Get urbanicity index by NUTS-3 level
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
-#' @return A \code{tibble} with columns \code{lvl3} and \code{value}. Column \code{lvl3} contains NUTS 3 districts,
+#' @return A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS 3 districts,
 #' whereas column \code{value} contains the log-population of the largest city within the respective district.
+#'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr left_join
+#' @importFrom tidyr expand_grid
+#'
 #' @export
 #'
 #' @examples
 #' urbanicity <- get_urbanicity()
-get_urbanicity <- function(cache_dir = NULL){
+get_urbanicity <- function(time_res = NULL,
+                           spat_res = NULL,
+                           age_res = NULL,
+                           cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "urbanicity.rds"
@@ -25,6 +41,18 @@ get_urbanicity <- function(cache_dir = NULL){
     dat <- get_urbanicity_from_source(cache_dir, filename)
   }
 
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+      dplyr::left_join(y = dat, by = "region") %>%
+      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                     time_f = time_f_urbanicity, spat_f = spat_f_urbanicity, age_f = age_f_urbanicity)
+  }
+
   return(dat)
 }
 
@@ -33,7 +61,7 @@ get_urbanicity <- function(cache_dir = NULL){
 #' @template cache_dir
 #' @param  filename The name of the file where population data is stored.
 #'
-#' @return A \code{tibble} with columns \code{lvl3} and \code{value}. Column \code{lvl3} contains NUTS 3 districts,
+#' @return A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS 3 districts,
 #' whereas column \code{value} contains the log-population of the largest city within the respective district.
 #'
 #' @importFrom utils download.file
@@ -68,7 +96,8 @@ get_urbanicity_from_source <- function(cache_dir, filename){
     dplyr::filter(population != 0) %>%
     dplyr::mutate(value = log(population)) %>%
     dplyr::select(lvl3, value) %>%
-    dplyr::arrange(lvl3)
+    dplyr::arrange(lvl3) %>%
+    dplyr::rename(region = lvl3)
 
   # save this
   saveRDS(dat, file = make_path(cache_dir, filename))

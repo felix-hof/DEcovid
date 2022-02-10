@@ -38,6 +38,11 @@ time_f_temperature <- function(x) mean(x, na.rm = TRUE)
 spat_f_temperature <- function(x) mean(x, na.rm = TRUE)
 age_f_temperature <- function(x) x[!is.na(x)][1]
 
+# urbanicity
+time_f_urbanicity <- function(x) x[!is.na(x)][1]
+spat_f_urbanicity <- function(x) x[which.max(x)]
+age_f_urbanicity <- function(x) x[!is.na(x)][1]
+
 #' Aggregate data sets across time, space and age groups
 #'
 #' @param data A \code{tibble} with columns \code{region}, \code{date}, \code{age} and \code{value}

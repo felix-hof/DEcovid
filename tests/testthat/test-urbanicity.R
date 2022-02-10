@@ -2,7 +2,7 @@ dat <- get_urbanicity()
 nuts_table <- nuts_table()
 
 test_that("there are no NAs", {
-  expect_true(!any(is.na(dat$lvl3)))
+  expect_true(!any(is.na(dat$region)))
 })
 
 test_that("All values are finite", {
@@ -10,5 +10,5 @@ test_that("All values are finite", {
 })
 
 test_that("All regions are included", {
-  expect_true(all(nuts_table$lvl3 %in% dat$lvl3))
+  expect_true(all(nuts_table$lvl3 %in% dat$region))
 })
