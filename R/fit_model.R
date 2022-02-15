@@ -132,6 +132,9 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
     stop("If you would like to add seasonality terms in any of the components, the argument \"period\" must be a positive integer.")
   }
 
+  # Sanity check on restrict object
+  check_restrict(end = end, epi = epi, ar = ar, restrict = restrict)
+
   # construct formulas from grids
   comp_grids <- lapply(seq_along(covariates), function(x){
     #print(x)
@@ -243,4 +246,49 @@ apply_restrictions <- function(grid, comp_restrict){
   }
 
   return(grid)
+}
+
+
+
+check_restrict <- function(end, epi, ar, restrict){
+
+  if(!is.list(restrict)){
+    stop("The object passed as \"restrict\" argument must be a list.")
+  }
+  if(!all(names(restrict) %in% c("end", "epi", "ar"))){
+    stop("All names of the list passed as \"restrict\" argument must be in c(\"end\", \"epi\", \"ar\").")
+  }
+
+  names_ok <- vapply(lapply(restrict, names), function(x) all(x %in% c("combined", "always", "exclusive")), logical(1L))
+  if(!all(names_ok)){
+    stop("The lists below each component must have names in c(\"combined\", \"always\", \"exclusive\").")
+  }
+
+  # Each sublist of each component has correct class
+  elements <- c("combined", "always", "exclusive")
+  classes <- c("list", "character", "list")
+  status <- vapply(seq_along(elements), function(y){
+    class_combined <- vapply(lapply(restrict, "[[", i = elements[y]), class, character(1L))
+    if(!all(class_combined %in% c(classes[y], "NULL"))){
+      stop(paste0("The list element \"", elements[y], "\" under each component must be either NULL or a ",
+                  ifelse(classes[y] == "list", "list", "character vector"), "."))
+    }
+    return(invisible(0L))
+  }, integer(1L))
+
+  # Exclusive is a list
+  exclusive_class <- vapply(restrict, function(x){ class(x$exclusive) }, character(1L))
+  if(!all(exclusive_class %in% c("list", "NULL"))){
+    stop("The element \"exclusive\" under each component must be a list.")
+  }
+
+  # Check that there are no covariates which are not present in the original components
+  all_covs <- unique(unlist(restrict, recursive = TRUE, use.names = TRUE))
+  if(!all(all_covs %in% c(end, epi, ar))){
+    offending <- all_covs[which(!(all_covs %in% c(end, epi, ar)))]
+    stop(paste0("Found covariates in \"restrict\" which are not in any of the passed \"epi\", \"epi\", or \"ar\" components: ",
+                paste(offending, collapse = ", ")))
+  }
+
+  return(invisible(0L))
 }
