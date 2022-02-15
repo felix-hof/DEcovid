@@ -29,6 +29,7 @@ Imports:
     rlang,
     MapColoring,
     units,
-    stats
+    stats,
+    surveillance
 Remotes:
     github::hunzikp/MapColoring
