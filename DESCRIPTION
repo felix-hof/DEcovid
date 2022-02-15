@@ -30,6 +30,7 @@ Imports:
     MapColoring,
     units,
     stats,
-    surveillance
+    surveillance,
+    ggplot2
 Remotes:
     github::hunzikp/MapColoring
