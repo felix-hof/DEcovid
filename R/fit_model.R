@@ -102,7 +102,8 @@ covariate_matrix <- function(data){
 #'                                              list("temperature", "seasonality"))),
 #'                  epi = list(combined = list(weekdays),
 #'                             always = c("seasonality2")))
-#'
+#' formulas <- make_formulas(end = end, epi = epi, ar = ar,
+#'                           period = 52, restrict = restrict)
 #'
 make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, restrict = NULL){
 
@@ -163,7 +164,10 @@ grid2formulas <- function(grid, period = NULL){
   nms <- colnames(grid)
   formulas <- lapply(seq_len(nrow(grid)), function(x){
 
-    # add intercept if not specifically excluded get covariates for the formula
+    # get covariates for the formula
+    covs <- colnames(grid)
+
+    # add intercept if not specifically excluded
     if(!any(grepl("^\\s*-\\s*1\\s*", covs))){
       covs <- c("1", nms[unlist(grid[x, ])])
     }
