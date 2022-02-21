@@ -1,5 +1,8 @@
 #' Get a list with binary indicators of the dominant variant
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{list} whose elements are time series indicating which variant was dominant in which week.
@@ -7,7 +10,16 @@
 #'
 #' @examples
 #' variants <- get_variants()
-get_variants <- function(cache_dir = NULL){
+#' variants <- get_variants(time_res = "daily", spat_res = 1, age_res = "no_age")
+get_variants <- function(time_res = NULL,
+                         spat_res = NULL,
+                         age_res = NULL,
+                         cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "variants.rds"
@@ -22,6 +34,26 @@ get_variants <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_variants_from_source(cache_dir = cache_dir, filename = filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- lapply(dat, function(x){
+      dates <- vapply(ISOweek::date2ISOweek(x$date), function(y){
+        paste0(sub("\\d$", "", y), 1:7)
+      }, character(7L))
+      dim(dates) <- NULL
+      dates <- ISOweek::ISOweek2date(dates)
+      out <- dplyr::tibble(date = dates, value = rep(x$value, each = 7L))
+      tidyr::expand_grid(age = age, date = date, region = region) %>%
+        dplyr::left_join(y = out, by = "date") %>%
+        summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                       time_f = time_f_variants, spat_f = spat_f_variants, age_f = age_f_variants)
+    })
   }
 
   return(dat)
@@ -59,10 +91,17 @@ get_variants_from_source <- function(cache_dir, filename){
     {if(length(unique(.[["source"]])) > 1) dplyr::filter(., number_sequenced == number_sequenced[which.max(number_sequenced)]) else .} %>%
     # get the dominant variant
     dplyr::filter(number_detections_variant == number_detections_variant[which.max(number_detections_variant)]) %>%
+    # set rows to NA if no one was sequenced that week
+    dplyr::mutate(number_detections_variant = ifelse(all(number_detections_variant == 0L), NA_integer_, number_detections_variant)) %>%
     dplyr::ungroup() %>%
+    # filter out rows where no one was sequenced
+    dplyr::filter(!is.na(number_detections_variant)) %>%
     # if any error or weird stuff is going on: check the part above
     {
+      # Throw message if non-valid denominator detected
       if(any(.[["valid_denominator"]] == "No")) message("Dataset variants: non-valid denominator detected.\n")
+      # Throw warning in case of ties
+      if(length(.[["year_week"]]) != length(unique(.[["year_week"]]))) warning("Dataset variants: There are ties within a week.\n")
       .
     } %>%
     dplyr::select(year_week, variant) %>%

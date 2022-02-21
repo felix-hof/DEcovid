@@ -43,6 +43,11 @@ time_f_urbanicity <- function(x) x[!is.na(x)][1]
 spat_f_urbanicity <- function(x) x[which.max(x)]
 age_f_urbanicity <- function(x) x[!is.na(x)][1]
 
+# variants
+time_f_variants <- function(x) x[!is.na(x)][1]
+spat_f_variants <- function(x) x[!is.na(x)][1]
+age_f_variants <- function(x) x[!is.na(x)][1]
+
 #' Aggregate data sets across time, space and age groups
 #'
 #' @param data A \code{tibble} with columns \code{region}, \code{date}, \code{age} and \code{value}
