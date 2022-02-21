@@ -245,6 +245,8 @@ utils::globalVariables(c(
   "country_code", "year_week", "valid_denominator", "number_sequenced", "number_detections_variant",
   "variant",
   # plotting.R
-  "component"
+  "component",
+  # table.R
+  "new_name", "trans", "comp", "par", "latex", "est", "sderr"
 ))
 
