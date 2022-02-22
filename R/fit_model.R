@@ -36,7 +36,7 @@ covariate_matrix <- function(data){
   if(!all(check$n_age == check$n_age[1])){
     stop("There must be the same number of age groups on each day.")
   }
-  if(!all(check$n_unique_region == check$n_unique_region[1])){
+  if(!all(check$n_unique_regions == check$n_unique_regions[1])){
     stop("There must be the same amount of unique regions on each day.")
   }
   if(!all(check$n_unique_age == check$n_unique_age[1])){
