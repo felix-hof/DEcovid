@@ -48,6 +48,11 @@ time_f_variants <- function(x) x[!is.na(x)][1]
 spat_f_variants <- function(x) x[!is.na(x)][1]
 age_f_variants <- function(x) x[!is.na(x)][1]
 
+# border indicators
+time_f_border_inds <- function(x) x[!is.na(x)][1]
+spat_f_border_inds <- function(x) ifelse(any(x == 1L), 1L, 0L)
+age_f_border_inds <- function(x) x[!is.na(x)][1]
+
 #' Aggregate data sets across time, space and age groups
 #'
 #' @param data A \code{tibble} with columns \code{region}, \code{date}, \code{age} and \code{value}

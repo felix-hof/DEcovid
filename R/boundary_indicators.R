@@ -1,5 +1,8 @@
 #' Make border indicators from geometries provided by Eurostat
 #'
+#' @template time_res
+#' @template spat_res
+#' @template age_res
 #' @template cache_dir
 #'
 #' @return A \code{list} of length 10. Each list element corresponds to a specific neighbour country or a general
@@ -10,7 +13,15 @@
 #' @examples
 #' bounds <- get_boundary_inds()
 #'
-get_boundary_inds <- function(cache_dir = NULL){
+get_boundary_inds <- function(time_res = NULL,
+                              spat_res = NULL,
+                              age_res = NULL,
+                              cache_dir = NULL){
+
+  # Check inputs
+  join <- check_res_args(time_res = time_res,
+                         spat_res = spat_res,
+                         age_res = age_res)
 
   # set parameters for cacheing
   filename <- "boundary_inds.rds"
@@ -25,6 +36,20 @@ get_boundary_inds <- function(cache_dir = NULL){
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     dat <- get_boundary_inds_from_source(cache_dir, filename)
+  }
+
+  # aggregate if desired
+  if(join){
+    dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
+    region <- dims$region
+    age <- dims$age
+    date <- dims$date
+    dat <- lapply(dat, function(x){
+      tidyr::expand_grid(age = age, date = date, region = region) %>%
+        dplyr::left_join(y = x, by = "region") %>%
+        summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                       time_f = time_f_border_inds, spat_f = spat_f_border_inds, age_f = age_f_border_inds)
+    })
   }
 
   return(dat)
@@ -43,6 +68,7 @@ get_boundary_inds <- function(cache_dir = NULL){
 #' @importFrom sf st_relate
 #' @importFrom purrr map_dfc map_int
 #' @importFrom rlang :=
+#' @importFrom tidyr everything
 #'
 get_boundary_inds_from_source <- function(cache_dir, filename){
 
@@ -50,10 +76,10 @@ get_boundary_inds_from_source <- function(cache_dir, filename){
   nb_pattern <- "F***1****" # Use "F***T****" if a point where geoms touch is enough for two regions to be neighbours
 
   # get geometries and filter them
-  de_geom <- get_geoms()[[1]] %>%
+  de_geom <- get_geoms()[[4]] %>%
     dplyr::filter(nchar(region) == 5) %>%
     dplyr::arrange(region)
-  neigh_geom <- get_geoms()[[2]] %>%
+  neigh_geom <- get_geoms()[[5]] %>%
     dplyr::arrange(region)
 
   # get which region neighbours what country
@@ -68,10 +94,10 @@ get_boundary_inds_from_source <- function(cache_dir, filename){
     }) %>%
       {dplyr::tibble(!!as.symbol(neigh_geom$region[x]) := .)}
   }) %>%
-    dplyr::mutate(ALL = ifelse(rowSums(dplyr::across()) > 0L, 1L, 0L),
-                  lvl3 = de_geom$region) %>%
+    dplyr::mutate(ALL = ifelse(rowSums(dplyr::across(tidyr::everything())) > 0L, 1L, 0L),
+                  region = de_geom$region) %>%
     {
-      namecol <- grep("lvl3", colnames(.))
+      namecol <- grep("region", colnames(.))
       lapply(seq_along(.)[-namecol], function(x){
         .[, c(x, namecol)] %>%
           dplyr::rename(value = 1)
