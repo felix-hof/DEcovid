@@ -38,7 +38,7 @@ parameter_table <- function(model, par_names, idx2Exp = FALSE, reparamPsi = TRUE
                                                 comp == "overdispersion" & !reparamPsi ~ "-log",
                                                 TRUE ~ ""))
   # get parameter names
-  dat$name <- gsub("^.+\\.(.+)$", "\\1", dat$par)
+  dat$name <- gsub("^.+?\\.(.+)$", "\\1", dat$par)
   dat$name[grepl("^A\\(.+\\)$", dat$name)] <- "amplitude"
   dat$name[grepl("^s\\(.+\\)$", dat$name)] <- "phase"
   if(any(grepl("^(sin|cos)\\(.+\\)$", dat$name))) stop("amplitudeShift = FALSE is not implemented.")
