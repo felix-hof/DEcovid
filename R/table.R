@@ -9,6 +9,8 @@
 #' @return A \code{tibble} containing parameter estimates and standard errors. Can be passed to \code{\link[kableExtra]{kable}}
 #' @importFrom dplyr case_when mutate tibble left_join select arrange bind_rows full_join %>% slice
 #'
+#' @export
+#'
 parameter_table <- function(model, par_names, idx2Exp = FALSE, reparamPsi = TRUE, amplitudeShift = TRUE){
 
   # get parameters
