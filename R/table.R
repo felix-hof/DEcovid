@@ -21,8 +21,9 @@ parameter_table <- function(model, par_names, idx2Exp = FALSE, reparamPsi = TRUE
   }
 
   # make regular expressions and get lag parameter
-  regex_comp <- paste0(ifelse(idx2Exp, "^exp\\(", "^"), c("end\\.", "ar\\.", "ne\\."))
-  regex_comp <- c(regex_comp, paste0(ifelse(reparamPsi, "^", "^-log\\("), "overdisp\\.*"))
+  regex_comp <- paste0(ifelse(idx2Exp, "^(exp\\()?", "^"), c("end\\.", "ar\\.", "ne\\."))
+  regex_comp <- c(regex_comp, paste0(ifelse(reparamPsi, "^", "^-log\\("), "overdisp\\.*"),
+                  paste0(ifelse(idx2Exp, "^exp\\(", "^"), "neweights\\."))
 
   # construct table
   dat <- dplyr::tibble(par = rownames(pars),
@@ -31,16 +32,20 @@ parameter_table <- function(model, par_names, idx2Exp = FALSE, reparamPsi = TRUE
   dat <- dplyr::mutate(dat, comp = dplyr::case_when(grepl(regex_comp[1], par) ~ "endemic",
                                                     grepl(regex_comp[2], par) ~ "autoregressive",
                                                     grepl(regex_comp[3], par) ~ "spatiotemporal",
-                                                    grepl(regex_comp[4], par) ~ "overdispersion"))
+                                                    grepl(regex_comp[4], par) ~ "overdispersion",
+                                                    grepl(regex_comp[5], par) ~ "power law"))
   dat <- dplyr::mutate(dat,
-                       trans = dplyr::case_when(comp %in% c("endemic", "autoregressive", "spatiotemporal") & idx2Exp ~ "exp",
+                       trans = dplyr::case_when(comp %in% c("endemic", "autoregressive", "spatiotemporal") & idx2Exp & !grepl("\\*\\s*pi\\s*\\*", par) ~ "exp",
                                                 comp == "overdispersion" & reparamPsi ~ "",
                                                 comp == "overdispersion" & !reparamPsi ~ "-log",
+                                                comp == "power law" & idx2Exp ~ "exp",
                                                 TRUE ~ ""))
   # get parameter names
   dat$name <- gsub("^.+?\\.(.+)$", "\\1", dat$par)
-  dat$name[grepl("^A\\(.+\\)$", dat$name)] <- "amplitude"
-  dat$name[grepl("^s\\(.+\\)$", dat$name)] <- "phase"
+  if(idx2Exp) dat$name <- gsub("\\)$", "", dat$name)
+  dat$name[grepl("^A\\(.+$", dat$name)] <- "amplitude"
+  dat$name[grepl("^s\\(.+$", dat$name)] <- "phase"
+  dat$name[grepl("^d$", dat$name)] <- "decay"
   if(any(grepl("^(sin|cos)\\(.+\\)$", dat$name))) stop("amplitudeShift = FALSE is not implemented.")
   dat <- dplyr::left_join(x = dat, y = dplyr::tibble(new_name = names(par_names),
                                                      name = par_names), by = "name")
@@ -55,8 +60,9 @@ parameter_table <- function(model, par_names, idx2Exp = FALSE, reparamPsi = TRUE
     ifelse(trans != "", paste0("\\text{", trans, "} \\, "), ""),
     dplyr::case_when(comp %in% c("endemic", "autoregressive", "spatiotemporal") ~ "\\beta",
                      comp == "overdispersion" ~ "\\psi",
-                     comp == "lag" ~ paste0("\\", name)),
-    ifelse(!(comp %in% c("lag", "overdispersion")) | (comp == "overdispersion" & n_overdisp > 1L), "_{", ""),
+                     comp == "lag" ~ paste0("\\", name),
+                     comp == "power law" ~ "d"),
+    ifelse(!(comp %in% c("lag", "overdispersion", "power law")) | (comp == "overdispersion" & n_overdisp > 1L), "_{", ""),
     dplyr::case_when(comp == "endemic" ~ "\\nu",
                      comp == "autoregressive" ~ "\\lambda",
                      comp == "spatiotemporal" ~ "\\phi",
