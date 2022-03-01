@@ -243,7 +243,7 @@ utils::globalVariables(c(
   "name",
   # variants.R
   "country_code", "year_week", "valid_denominator", "number_sequenced", "number_detections_variant",
-  "variant",
+  "variant", "percent_cases",
   # plotting.R
   "component",
   # table.R

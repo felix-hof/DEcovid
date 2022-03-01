@@ -68,7 +68,8 @@ get_variants <- function(time_res = NULL,
 #' @return A \code{list} whose elements are time series indicating which variant was dominant in which week.
 #'
 #' @importFrom readr read_csv cols_only
-#' @importFrom dplyr filter select %>% group_by ungroup mutate rename arrange pull
+#' @importFrom ISOweek ISOweek2date
+#' @importFrom dplyr filter select %>% group_by summarise ungroup mutate rename arrange pull
 #' @importFrom magrittr set_names
 get_variants_from_source <- function(cache_dir, filename){
 
@@ -89,38 +90,35 @@ get_variants_from_source <- function(cache_dir, filename){
     dplyr::group_by(year_week) %>%
     {if(any(.[["valid_denominator"]] == "Yes")) dplyr::filter(., valid_denominator == "Yes") else .} %>%
     {if(length(unique(.[["source"]])) > 1) dplyr::filter(., number_sequenced == number_sequenced[which.max(number_sequenced)]) else .} %>%
-    # get the dominant variant
-    dplyr::filter(number_detections_variant == number_detections_variant[which.max(number_detections_variant)]) %>%
-    # set rows to NA if no one was sequenced that week
-    dplyr::mutate(number_detections_variant = ifelse(all(number_detections_variant == 0L), NA_integer_, number_detections_variant)) %>%
     dplyr::ungroup() %>%
-    # filter out rows where no one was sequenced
-    dplyr::filter(!is.na(number_detections_variant)) %>%
+    # set rows to NA if no one was sequenced that week and calculate percentage of cases within each week
+    dplyr::mutate(number_detections_variant = ifelse(number_sequenced == 0L, NA_integer_, number_detections_variant),
+                  percent_cases = number_detections_variant / number_sequenced) %>%
     # if any error or weird stuff is going on: check the part above
     {
       # Throw message if non-valid denominator detected
       if(any(.[["valid_denominator"]] == "No")) message("Dataset variants: non-valid denominator detected.\n")
-      # Throw warning in case of ties
-      if(length(.[["year_week"]]) != length(unique(.[["year_week"]]))) warning("Dataset variants: There are ties within a week.\n")
       .
     } %>%
-    dplyr::select(year_week, variant) %>%
-    # convert date object
-    dplyr::mutate(year_week = gsub("^(\\d{4})-(\\d{2})", "\\1-W\\2-4", year_week)) %>% # Use Thursday as reference (As I cannot find the day this is updated)
-    dplyr::mutate(year_week = ISOweek::ISOweek2date(year_week)) %>%
-    # prettify
-    dplyr::rename(date = year_week, value = variant) %>%
-    dplyr::arrange(date)
-
-  variants <- vars %>% dplyr::filter(!is.na(value)) %>% dplyr::pull(value) %>% unique()
-  vars <- lapply(variants, function(x){
-    vars %>%
-      dplyr::mutate(value = dplyr::case_when(is.na(value == x) ~ 0L,
-                                             value != x ~ 0L,
-                                             value == x ~ 1L))
-  }) %>%
-    magrittr::set_names(variants)
+    {
+      # Get percentage of cases for each dominant variant
+      dominant_variants <- dplyr::group_by(., year_week) %>%
+        dplyr::summarise(variant = variant[which.max(percent_cases)], .groups = "drop") %>%
+        dplyr::pull(variant) %>%
+        unique()
+      out <- lapply(dominant_variants, function(x){
+        .[] %>%
+          dplyr::filter(variant == x) %>%
+          dplyr::select(year_week, percent_cases) %>%
+          dplyr::mutate(year_week = ISOweek::ISOweek2date(gsub("^(\\d{4})-(\\d{2})", "\\1-W\\2-4", year_week))) %>%
+          dplyr::rename(date = year_week, value = percent_cases) %>%
+          dplyr::arrange(date)
+      }) %>%
+        magrittr::set_names(dominant_variants)
+      out
+    }
 
   saveRDS(vars, file = make_path(cache_dir, filename))
 
+  return(vars)
 }
