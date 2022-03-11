@@ -17,6 +17,12 @@ get_nb_matrix <- function(by = c("age", "region"), nuts_level = 3, cache_dir = N
 
 
   if(!(nuts_level %in% 0:3) || length(nuts_level) != 1) stop("Argument 'nuts_level' must be one of c(0, 1, 2, 3).")
+  if(length(by) == 1 && by == "region" && nuts_level == 0){
+    out <- as.matrix(1L)
+    rownames(out) <- colnames(out) <- "DE"
+    return(out)
+  }
+  if(!all(by %in% c("age", "region"))) stop("The argument 'by' must be a subset of c(\"age\", \"region\")")
   by <- match.arg(by, several.ok = TRUE)
   cache_dir <- get_cache_dir(cache_dir)
 
@@ -33,17 +39,17 @@ get_nb_matrix <- function(by = c("age", "region"), nuts_level = 3, cache_dir = N
     dat <- readRDS(make_path(cache_dir, filename))
   } else {
     # load necessary data
-    geoms <- get_geoms()[[nuts_level + 1]]
+    geoms <- get_geoms(cache_dir = cache_dir)[[nuts_level + 1]]
     if(file.exists(make_path(cache_dir, paste0("case_regions_", nuts_level, ".rds")))){
       regions <- readRDS(make_path(cache_dir, paste0("case_regions_", nuts_level, ".rds")))
     } else {
-      get_cases()
+      get_cases(cache_dir = cache_dir)
       regions <- readRDS(make_path(cache_dir, paste0("case_regions_", nuts_level, ".rds")))
     }
     if(file.exists(make_path(cache_dir, "agegroups.rds"))){
       agegroups <- readRDS(make_path(cache_dir, "agegroups.rds"))
     } else {
-      get_cases()
+      get_cases(cache_dir = cache_dir)
       regions <- readRDS(make_path(cache_dir, "agegroups.rds"))
     }
     # calculate matrix
