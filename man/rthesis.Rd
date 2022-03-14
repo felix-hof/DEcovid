@@ -6,7 +6,7 @@
 \title{Functionality used for the thesis of Felix Hofmann}
 \description{
 The package \pkg{rthesis} provides functions used in my thesis. Most of the functions are used to fetch data
-from various sources. However, the package also contains functionality for processing data. Some functions
+from various sources. However, the package also contains functionality for processing data.
 }
 \section{Functions included}{
 
