@@ -137,10 +137,36 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
 
   # construct formulas from grids
   comp_grids <- lapply(seq_along(covariates), function(x){
-    #print(x)
-    grid <- expand.grid(lapply(covariates[[x]], function(...) c(TRUE, FALSE)))
-    names(grid) <- covariates[[x]]
-    grid <- apply_restrictions(grid, restrict[[x]])
+    # get covariates and restrictions for the current component
+    restrict_copy <- restrict[[x]]
+    cov_copy <- covariates[[x]]
+    # replace "combined" covariates by one variable
+    for(i in seq_along(restrict_copy$combined)){
+      to_replace <- restrict_copy$combined[[i]]
+      restrict_copy <- rapply(restrict_copy,
+                              function(y){
+                                if(any(to_replace %in% y)) unique(replace(y, y %in% to_replace, paste0("Var", i))) else y
+                              }, classes = "character", how = "replace")
+      cov_copy[cov_copy %in% to_replace] <- paste0("Var", i)
+      cov_copy <- unique(cov_copy)
+    }
+    # expand grid over those covariates that do actually vary
+    grid <- expand.grid(lapply(cov_copy[!cov_copy %in% restrict_copy$always], function(...) c(TRUE, FALSE)))
+    names(grid) <- cov_copy[!cov_copy %in% restrict_copy$always]
+    # add TRUE columns for those covariates that are always in the model
+    add <- as.data.frame(matrix(TRUE, nrow = nrow(grid), ncol = length(restrict_copy$always)))
+    names(add) <- restrict_copy$always
+    grid <- cbind(grid, add)
+    # filter
+    grid <- apply_restrictions(grid, restrict_copy)
+    # reinsert "combined" covariates
+    for(i in seq_along(restrict_copy$combined)){
+      n <- length(restrict[[x]]$combined[[i]]) - 1L
+      add <- as.data.frame(vapply(seq_len(n), function(...) grid[, paste0("Var", i)], logical(nrow(grid))))
+      names(add) <- rep(paste0("Var", i), n)
+      grid <- cbind(grid, add)
+      colnames(grid)[colnames(grid) == paste0("Var", i)] <- restrict[[x]]$combined[[i]]
+    }
     f <- grid2formulas(grid = grid, period = period)
     return(f)
   })
@@ -215,19 +241,19 @@ grid2formulas <- function(grid, period = NULL){
 #'
 apply_restrictions <- function(grid, comp_restrict){
 
-  if(!is.null(comp_restrict[["combined"]])){
-    idx <- vapply(comp_restrict[["combined"]], function(x){
-      len <- length(x)
-      apply(grid[, x, drop = FALSE], 1, function(x) ifelse(sum(x) %in% c(0L, len), TRUE, FALSE))
-    }, logical(nrow(grid)))
-    idx <- apply(idx, 1, all)
-    grid <- grid[idx, ]
-  }
+  # if(!is.null(comp_restrict[["combined"]])){
+  #   idx <- vapply(comp_restrict[["combined"]], function(x){
+  #     len <- length(x)
+  #     apply(grid[, x, drop = FALSE], 1, function(x) ifelse(sum(x) %in% c(0L, len), TRUE, FALSE))
+  #   }, logical(nrow(grid)))
+  #   idx <- apply(idx, 1, all)
+  #   grid <- grid[idx, ]
+  # }
 
-  if(!is.null(comp_restrict[["always"]])){
-    idx <- apply(grid[ , comp_restrict[["always"]], drop = FALSE], 1, all)
-    grid <- grid[idx, ]
-  }
+  # if(!is.null(comp_restrict[["always"]])){
+  #   idx <- apply(grid[ , comp_restrict[["always"]], drop = FALSE], 1, all)
+  #   grid <- grid[idx, ]
+  # }
 
   if(!is.null(comp_restrict[["exclusive"]])){
     idx <- vapply(comp_restrict[["exclusive"]], function(x){
