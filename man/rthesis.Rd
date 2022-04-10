@@ -3,14 +3,18 @@
 \docType{package}
 \name{rthesis}
 \alias{rthesis}
-\title{Functionality used for the thesis of Felix Hofmann}
+\title{Functionality used for the master thesis of Felix Hofmann}
 \description{
-The package \pkg{rthesis} provides functions used in my thesis. Most of the functions are used to fetch data
-from various sources. However, the package also contains functionality for processing data.
+The package \pkg{rthesis} provides functions used in the author's thesis.
+Some of the functions are used to fetch data sets, whereas others provide
+the functionality to process the data such that it can be used with the
+\code{hhh4} model class implemented in the
+\code{\link[surveillance]{surveillance-package}}.
 }
 \section{Functions included}{
 
-The most relevant functions are: \cr
+For data fetching and preprocessing: \cr
+\cr
 \code{\link{get_cases}} \cr
 \code{\link{nuts_table}} \cr
 \code{\link{get_boundary_inds}} \cr
@@ -24,5 +28,20 @@ The most relevant functions are: \cr
 \code{\link{get_urbanicity}} \cr
 \code{\link{get_vaccination}} \cr
 \code{\link{get_map_colors}} \cr
+\code{\link{get_variants}} \cr
+\cr
+For generation of tables and plots: \cr
+\cr
+\code{\link{parameter_table}} \cr
+\cr
+For reshaping data between tibbles and
+matrices used in \code{\link[surveillance]{hhh4}}: \cr
+\cr
+\code{\link{df2matrix}} \cr
+\code{\link{matrix2df}} \cr
+\cr
+For fitting lots of different models: \cr
+\cr
+\code{\link{make_formulas}} \cr
 }
 

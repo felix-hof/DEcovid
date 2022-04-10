@@ -26,7 +26,7 @@ and \code{ar}. If not \code{NULL}, the \code{list} can have elements of  named "
 and determine restrictions to be applied to covariate combinations within each of the components. Restrictions must be stated
 in the following form:
 \describe{
-\item{combined}{A \code{list} whose elements are \code{character} stating which covariates should be considered as one combined
+\item{combined}{A \code{list} whose elements are \code{character} vectors stating which covariates should be considered as one combined
 covariate. This is useful in case of mutually exclusive indicators like weekday effects as it restricts the resulting formulas to
 either contain all indicators or none of them.}
 \item{always}{A \code{character} vector containing covariates that must always be included in the formula.}

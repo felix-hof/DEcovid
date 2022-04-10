@@ -13,6 +13,7 @@
 #' @param tol The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
 #' is still considered as relevant for the temperature within a specific region.
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{tibble} containing all weather stations within Germany
 #' with location and temperature time series starting on 1 January 2020.
@@ -32,19 +33,16 @@ get_temperature <- function(time_res = NULL,
                             age_res = NULL,
                             complete = c("none", "station", "region"),
                             tol = 0,
-                            cache_dir = NULL){
+                            cache_dir = NULL,
+                            enforce_cache = FALSE){
 
   # Check inputs
   join <- check_res_args(time_res = time_res,
                          spat_res = spat_res,
                          age_res = age_res)
-  if(join){
-    complete = "region"
-  }
-
+  check_enforce_cache(enforce_cache = enforce_cache)
   # nb_pattern used in this function
   nb_pattern <- "F***1****" # Use "F***T****" if a point where geoms touch is enough for two regions to be neighbours
-
   complete <-  match.arg(complete)
   if(length(complete) != 1L){
     stop("The 'complete' argument must be of length 1.")
@@ -55,6 +53,12 @@ get_temperature <- function(time_res = NULL,
   if(complete == "region"){
     tol <- units::set_units(tol, "km")
   }
+  if(join){
+    if(complete != "region")
+      warning("Ignoring argument \"complete = '", complete, "'\" and setting it to 'region' as otherwise aggregation does not work.")
+    complete <- "region"
+  }
+
 
   # set parameters for cacheing
   filename <- "temperature.rds"
@@ -65,11 +69,19 @@ get_temperature <- function(time_res = NULL,
                                 cutoff = 15, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    temperature <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      temperature <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    if(file.exists(make_path(cache_dir, "ECA_blend_tg"))) unlink(make_path(cache_dir, "ECA_blend_tg"))
-    temperature <- process_temperature(cache_dir, filename)
+    if(from_cache){
+      temperature <- readRDS(make_path(cache_dir, filename))
+    } else {
+      if(file.exists(make_path(cache_dir, "ECA_blend_tg"))) unlink(make_path(cache_dir, "ECA_blend_tg"))
+      temperature <- process_temperature(cache_dir, filename)
+    }
   }
 
   # if we completed stations required, complete

@@ -1,6 +1,7 @@
 #' Get geometries for the thesis
 #'
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{list} of length 5. All elements of this list are of class \code{sf}. The first four elements
 #' contain geometries of German NUTS regions on levels 0-3, whereas the fifth elements contains
@@ -9,22 +10,32 @@
 #'
 #' @examples
 #' geoms <- get_geoms()
-get_geoms <- function(cache_dir = NULL){
+get_geoms <- function(cache_dir = NULL, enforce_cache = FALSE){
+
+  # check_inputs
+  check_enforce_cache(enforce_cache)
 
   # set parameters for cacheing
   filename <- "geoms.rds"
   cache_dir <- get_cache_dir(cache_dir)
 
   # make decision whether to get data from cached file or from source
-  #cat(paste(ls(), collapse = ", "))
   from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
                                 cutoff = 60, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    dat <- process_shapefiles(cache_dir = cache_dir, filename = filename)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- process_shapefiles(cache_dir = cache_dir, filename = filename)
+    }
   }
 
   # add color indices
@@ -45,7 +56,7 @@ get_geoms <- function(cache_dir = NULL){
 #'
 #' @importFrom sf st_read st_union
 #' @importFrom dplyr select filter %>% arrange
-#'
+#' @noRd
 process_shapefiles <- function(cache_dir, filename){
 
   # Which shapefile to use
@@ -112,6 +123,8 @@ process_shapefiles <- function(cache_dir, filename){
   saveRDS(out_obj,
           file = make_path(cache_dir, filename))
   cat("Created processed geometries in", make_path(cache_dir, filename), fill = TRUE)
+  unlink(make_path(cache_dir, shapefile_dir), recursive = TRUE)
+  cat(paste0("Deleted directory '", make_path(cache_dir, shapefile_dir) ,"'."), fill = TRUE)
 
   # return 0
   return(out_obj)
@@ -123,6 +136,7 @@ process_shapefiles <- function(cache_dir, filename){
 #' @return This function invisibly returns \code{0} if everything worked well
 #'
 #' @importFrom utils download.file unzip
+#' @noRd
 get_shapefiles_from_source <- function(cache_dir){
 
   shapefile_dir <- "shapefiles"

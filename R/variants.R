@@ -4,6 +4,7 @@
 #' @template spat_res
 #' @template age_res
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{list} whose elements are time series indicating which variant was dominant in which week.
 #' @export
@@ -14,12 +15,14 @@
 get_variants <- function(time_res = NULL,
                          spat_res = NULL,
                          age_res = NULL,
-                         cache_dir = NULL){
+                         cache_dir = NULL,
+                         enforce_cache = FALSE){
 
   # Check inputs
   join <- check_res_args(time_res = time_res,
                          spat_res = spat_res,
                          age_res = age_res)
+  check_enforce_cache(enforce_cache = enforce_cache)
 
   # set parameters for cacheing
   filename <- "variants.rds"
@@ -30,10 +33,18 @@ get_variants <- function(time_res = NULL,
                                 cutoff = 3, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    dat <- get_variants_from_source(cache_dir = cache_dir, filename = filename)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- get_variants_from_source(cache_dir = cache_dir, filename = filename)
+    }
   }
 
   # aggregate if desired

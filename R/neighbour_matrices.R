@@ -94,6 +94,7 @@ get_nb_matrix <- function(by = c("age", "region"), nuts_level = 3, cache_dir = N
 #' @importFrom sf st_relate
 #' @importFrom parallel mclapply detectCores
 #' @importFrom tidyr expand_grid
+#' @noRd
 compute_nb_matrix <- function(regions, agegroups, geoms, nb_pattern, save_location = NULL){
 
   ## check regions

@@ -4,6 +4,7 @@
 #' @template spat_res
 #' @template age_res
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{tibble} with columns \code{date}, \code{lvl3} and \code{value} (contains the binary holiday indicator).
 #'
@@ -19,12 +20,14 @@
 get_holidays <- function(time_res = NULL,
                          spat_res = NULL,
                          age_res = NULL,
-                         cache_dir = NULL){
+                         cache_dir = NULL,
+                         enforce_cache = FALSE){
 
   # Check inputs
   join <- check_res_args(time_res = time_res,
                          spat_res = spat_res,
                          age_res = age_res)
+  check_enforce_cache(enforce_cache = enforce_cache)
 
   # set parameters for cacheing
   filename <- "holidays.rds"
@@ -35,10 +38,18 @@ get_holidays <- function(time_res = NULL,
                                 cutoff = 30, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    dat <- get_holidays_from_source(cache_dir, filename)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- get_holidays_from_source(cache_dir, filename)
+    }
   }
 
   # aggregate if desired
@@ -69,7 +80,7 @@ get_holidays <- function(time_res = NULL,
 #' @importFrom tidyr expand_grid
 #' @importFrom dplyr tibble left_join select distinct bind_rows
 #' @importFrom stringr str_extract_all
-#'
+#' @noRd
 get_holidays_from_source <- function(cache_dir, filename){
 
   # other stuff needed
@@ -141,6 +152,7 @@ get_holidays_from_source <- function(cache_dir, filename){
 
   # save this
   saveRDS(dat, file = make_path(cache_dir, filename))
+  cat(paste0("Created file '", make_path(cache_dir, filename), "'."))
 
   return(dat)
 }

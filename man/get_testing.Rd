@@ -4,7 +4,13 @@
 \alias{get_testing}
 \title{Get testing data from RKI or from cache}
 \usage{
-get_testing(time_res = NULL, spat_res = NULL, age_res = NULL, cache_dir = NULL)
+get_testing(
+  time_res = NULL,
+  spat_res = NULL,
+  age_res = NULL,
+  cache_dir = NULL,
+  enforce_cache = FALSE
+)
 }
 \arguments{
 \item{time_res}{A \code{character} vector of length 1 indicating the temporal resolution of the data.
@@ -30,6 +36,11 @@ If you would like to always use the same cache directory, the simplest way to do
 to run the following line of code: \code{options(rthesis_cache_dir = "path/to/your/cache/directory")}.
 Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
 the options.}
+
+\item{enforce_cache}{Either \code{TRUE} or \code{FALSE} (default). If \code{TRUE}, a cached version
+of the data set is loaded. If there is no cached version, the function returns an error. If \code{FALSE},
+the function returns a cached version if the data set is not older than a usual update cycle of the remote
+source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
 A \code{tibble} with columns \code{date} and \code{value} (contains the testing rate per day and 100'000 people).

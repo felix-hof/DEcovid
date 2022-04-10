@@ -10,7 +10,8 @@ get_temperature(
   age_res = NULL,
   complete = c("none", "station", "region"),
   tol = 0,
-  cache_dir = NULL
+  cache_dir = NULL,
+  enforce_cache = FALSE
 )
 }
 \arguments{
@@ -48,6 +49,11 @@ If you would like to always use the same cache directory, the simplest way to do
 to run the following line of code: \code{options(rthesis_cache_dir = "path/to/your/cache/directory")}.
 Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
 the options.}
+
+\item{enforce_cache}{Either \code{TRUE} or \code{FALSE} (default). If \code{TRUE}, a cached version
+of the data set is loaded. If there is no cached version, the function returns an error. If \code{FALSE},
+the function returns a cached version if the data set is not older than a usual update cycle of the remote
+source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
 A \code{tibble} containing all weather stations within Germany

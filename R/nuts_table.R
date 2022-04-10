@@ -1,6 +1,7 @@
 #' Get the NUTS table used to map German national statistical units to NUTS regions
 #'
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{tibble} mapping German national administrative to the NUTS classification.
 #' @export
@@ -8,7 +9,10 @@
 #' @examples
 #' nts <- nuts_table()
 #'
-nuts_table <- function(cache_dir = NULL){
+nuts_table <- function(cache_dir = NULL, enforce_cache = FALSE){
+
+  # check args
+  check_enforce_cache(enforce_cache = enforce_cache)
 
   # set parameters for cacheing
   filename <- "nuts_table.rds"
@@ -19,10 +23,18 @@ nuts_table <- function(cache_dir = NULL){
                                 cutoff = 60, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    dat <- get_nuts_table_from_source(cache_dir = cache_dir, filename = filename)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- get_nuts_table_from_source(cache_dir = cache_dir, filename = filename)
+    }
   }
 
   return(dat)
@@ -40,6 +52,7 @@ nuts_table <- function(cache_dir = NULL){
 #' @importFrom magrittr %$% %>%
 #' @importFrom purrr map_dfr
 #' @importFrom dplyr mutate select add_row filter arrange rename left_join
+#' @noRd
 get_nuts_table_from_source <- function(filename, cache_dir){
 
   lk2nuts <- "https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=NUTS,RS,county&returnGeometry=false&f=json" %>%

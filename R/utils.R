@@ -209,6 +209,14 @@ check_res_args <- function(spat_res, age_res, time_res){
   return(c("join" = !all(argsisnull)))
 }
 
+# check enforce_cache argument
+check_enforce_cache <- function(enforce_cache){
+  if(length(enforce_cache) != 1L || !(enforce_cache %in% c(TRUE, FALSE))){
+    stop("Argument 'enforce_cache' must be either TRUE or FALSE.")
+  }
+  return(invisible(NULL))
+}
+
 # Handle global variables for R CMD check ----
 
 utils::globalVariables(c(
@@ -240,7 +248,7 @@ utils::globalVariables(c(
   # aggregation_functions.R
   "region",
   # fit_models.R
-  "name",
+  "name", "stratum_1", "stratum_2",
   # variants.R
   "country_code", "year_week", "valid_denominator", "number_sequenced", "number_detections_variant",
   "variant", "percent_cases",

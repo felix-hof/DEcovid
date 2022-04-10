@@ -4,6 +4,7 @@
 #' @template spat_res
 #' @template age_res
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the counts) and \code{region}.
 #' The variables are aggregated to the desired level.
@@ -21,12 +22,14 @@
 get_cases <- function(time_res = "daily",
                       spat_res = 3,
                       age_res = "age",
-                      cache_dir = NULL){
+                      cache_dir = NULL,
+                      enforce_cache = FALSE){
 
   # check inputs
   check_res_args(time_res = time_res,
                  spat_res = spat_res,
                  age_res = age_res)
+  check_enforce_cache(enforce_cache)
 
   # set parameters for cacheing
   filename_cases <- "cases.rds"
@@ -38,10 +41,18 @@ get_cases <- function(time_res = "daily",
                                 cutoff = 1, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename_cases))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename_cases))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename_cases))
+    }
   } else {
-    dat <- get_cases_from_source(cache_dir, filename_cases = filename_cases, filename_deaths = filename_deaths)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename_cases))
+    } else {
+      dat <- get_cases_from_source(cache_dir, filename_cases = filename_cases, filename_deaths = filename_deaths)
+    }
   }
 
   # save agegroups, regions and dates (used for neighbourhood matrices and truncating the timeframe)
@@ -80,6 +91,7 @@ save_agegroups <- function(age, path){
   start_age <- suppressWarnings(as.numeric(gsub("^(\\d+).*$", "\\1", age)))
   ages <- age[order(start_age, na.last = NA)]
   saveRDS(ages, file = path)
+  cat(paste0("Created age groups used in case data set in '", path, "'."), fill = TRUE)
   return(invisible(0))
 }
 
@@ -89,6 +101,7 @@ save_regions <- function(regions, prefix, cache_dir){
   vapply(0:3, function(x){ # loop over NUTS levels
     out <- unique(substr(regions, start = 1, stop = x + 2))
     saveRDS(out, file = make_path(cache_dir, paste0(prefix, x,".rds")))
+    cat(paste0("Created NUTS-", x," levels used in case data set in '", make_path(cache_dir, paste0(prefix, x,".rds")), "'."), fill = TRUE)
     return(0L)
   }, integer(1L))
   return(invisible(0))
@@ -100,7 +113,9 @@ save_dates <- function(dates, file_daily, file_weekly, cache_dir){
   dates <- sort(unique(dates), decreasing = FALSE)
   dates_w <- ISOweek::ISOweek2date(unique(gsub("\\d$", "4", ISOweek::date2ISOweek(dates))))
   saveRDS(dates, file = make_path(cache_dir, file_daily))
+  cat(paste0("Created daily dates used in the case data set in '", make_path(cache_dir, file_daily), "'."), fill = TRUE)
   saveRDS(dates_w, file = make_path(cache_dir, file_weekly))
+  cat(paste0("Created weekly dates used in the case data set in '", make_path(cache_dir, file_weekly), "'."), fill = TRUE)
   return(invisible(0))
 }
 
@@ -116,7 +131,7 @@ save_dates <- function(dates, file_daily, file_weekly, cache_dir){
 #' @importFrom magrittr %>% set_attr
 #' @importFrom dplyr mutate group_by summarise right_join left_join select rename arrange if_else
 #' @importFrom tidyr expand_grid
-#'
+#' @noRd
 get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
 
   # get nuts table
@@ -184,12 +199,14 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
     dplyr::select(-new_deaths) %>%
     dplyr::rename(value = new_cases)
 
-  saveRDS(cases, file = file.path(cache_dir, filename_cases))
+  saveRDS(cases, file = make_path(cache_dir, filename_cases))
+  cat(paste0("Created case data set in '", make_path(cache_dir, filename_cases), "'."), fill = TRUE)
 
   rki_data %>%
     dplyr::select(-new_cases) %>%
     dplyr::rename(value = new_deaths) %>%
-    saveRDS(., file = file.path(cache_dir, filename_deaths))
+    saveRDS(., file = make_path(cache_dir, filename_deaths))
+  cat(paste0("Created death data set in '", make_path(cache_dir, filename_deaths), "'."), fill = TRUE)
 
   return(cases)
 }

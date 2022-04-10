@@ -10,7 +10,7 @@ age_f_area_size <- function(x){x[!is.na(x)][1]}
 
 # holidays
 time_f_holidays <- sum
-spat_f_holidays <- function(x) sum(x, na.rm = TRUE) / length(x)
+spat_f_holidays <- function(x) mean(x, na.rm = TRUE)
 age_f_holidays <- function(x){x[!is.na(x)][1]}
 
 # vaccination
@@ -71,7 +71,7 @@ age_f_border_inds <- function(x) x[!is.na(x)][1]
 #'
 #' @importFrom dplyr %>% mutate group_by summarise across
 #' @importFrom ISOweek ISOweek2date date2ISOweek
-#'
+#' @noRd
 summarise_data <- function(data,
                            time_res, spat_res, age_res,
                            time_f, spat_f, age_f){

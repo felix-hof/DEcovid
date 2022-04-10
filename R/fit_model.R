@@ -1,8 +1,10 @@
-#' Convert data tibble to matrix for use with Surveillance-package
+# Functions to convert data between long tibbles and wide matrices ========================================================
+
+#' Convert data tibble to matrix and back for use with \code{surveillance}-package
 #'
-#' @param data A \code{tibble} containing the columns \code{age}, \code{date}, \code{value} \code{region}.
+#' @param df A \code{tibble} containing the columns \code{"age"}, \code{"date"}, \code{"value"} and \code{"region"}.
 #'
-#' @return A matrix that can be used as a covariate in \code{hhh4} models or to fill the \code{observed} slot
+#' @return \code{df2matrix} returns a matrix that can be used as a covariate in \code{hhh4} models or to fill the \code{observed} slot
 #' in an \code{sts}-object.
 #'
 #' @importFrom dplyr group_by summarise mutate select pull
@@ -10,20 +12,23 @@
 #' @importFrom magrittr set_rownames
 #' @export
 #'
-covariate_matrix <- function(data){
+#' @examples
+#' urb <- get_urbanicity(time_res = "daily", spat_res = 1L, age_res = "age")
+#' df2matrix(df = urb)
+df2matrix <- function(df){
 
   # input checks
-  cond <- all(data$age == "total") || all(grepl("^\\d{2}[-+]\\d*$", data$age))
+  cond <- all(df$age == "total") || all(grepl("^\\d{2}[-+]\\d*$", df$age))
   if(!cond){
     stop("There is an unknown age group in the data.")
   }
-  if(!all(c("age", "date", "value", "region") %in% colnames(data))){
+  if(!all(c("age", "date", "value", "region") %in% colnames(df))){
     stop("Data must have columns 'age', 'date', 'value' and 'region'.")
   }
-  if(length(unique(diff(as.numeric(unique(data$date))))) != 1L){
+  if(length(unique(diff(as.numeric(unique(df$date))))) != 1L){
     stop("Differences between dates must be regular.")
   }
-  check <- data %>%
+  check <- df %>%
     dplyr::group_by(date) %>%
     dplyr::summarise(n_region = length(region),
                      n_age = length(age),
@@ -44,7 +49,7 @@ covariate_matrix <- function(data){
   }
 
   # convert tibble to matrix for use with surveillance
-  data %>%
+  df %>%
     {
       if(check$n_unique_regions[1] == 1L & check$n_unique_age[1] == 1L){
         .[] %>% dplyr::mutate(name = region) %>% dplyr::select(date, name, value)
@@ -66,6 +71,108 @@ covariate_matrix <- function(data){
     }
 }
 
+
+#' @rdname df2matrix
+#'
+#' @param mat A \code{matrix} as for example the ones created by
+#' \code{\link{matrix2df}}. Usually these are matrices as used for covariates in
+#' \code{\link[surveillance]{hhh4}} models.
+#' @param dates Either \code{NULL} (default) or a vector of class \code{Date}.
+#' If dates are set in the rownames of \code{mat}, this argument is ignored. However,
+#' if there are no date indications in the rownames of \code{mat}, this argument
+#' must be provided. If rownames are valid dates, they are used and this argument
+#' is ignored.
+#' @param reg_age Must be either \code{TRUE} or \code{FALSE}.
+#' If \code{TRUE} (default), unit names are interpreted as region and/or age
+#' depending on whether unit names start with a digit (age) or a non-digit (region).
+#' Unit names containing one or more dot(s) ('.') are interpreted as composed from different strata.
+#' If there are different strata and \code{reg_age = TRUE}, the first two strata will be
+#' interpreted as region and age, again depending on whether the colnames start with a
+#' digit or a non-digit. If \code{FALSE}, stratum names are returned as "stratum_1", "stratum_2" etc.
+#' @param format_orig This argument is only relevant if \code{reg_age = TRUE}.
+#' Must be either \code{TRUE} (default) or \code{FALSE}. If \code{TRUE}, the columns of
+#' the returned tibble are brought into the same order as the ones from
+#' the output of functions like for example \code{\link{get_cases}}.
+#' This argument is specific for this master thesis and has no
+#' practical use in other contexts.
+#'
+#' @return \code{matrix2df} returns a tibble with a columns "date", "value" and columns for each of th
+#' strata used for the unit constructions.
+#' @export
+#'
+#' @examples
+#' urb1 <- get_urbanicity("weekly", 1L, "no_age")
+#' mat <- df2matrix(urb1)
+#' urb2 <- matrix2df(mat)
+#' all.equal(urb1, urb2)
+matrix2df <- function(mat,
+                      dates = NULL,
+                      reg_age = TRUE,
+                      format_orig = TRUE){
+
+  # Argument checks
+  if(!(all(reg_age %in% c(TRUE, FALSE))) || length(reg_age) != 1L)
+    stop("Argument 'reg_age' must be either TRUE or FALSE.")
+  if(!is.null(dates) && !inherits(dates, "Date"))
+    stop("Argument 'dates' must either be NULL or a vector of class 'Date'.")
+  if(!inherits(mat, "matrix"))
+    stop("Argument 'mat' must be a matrix.")
+  if(is.null(colnames(mat))) stop("Matrix 'mat' must have column names.")
+  if(any(is.na(colnames(mat)))) stop("All column names of matrix 'mat' must not be NA.")
+  if(!all(grepl("^[0-2]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$", rownames(mat)))){
+    # if dates not set in rownames, check dates argument
+    if(is.null(dates)) stop("The rownames of 'mat' are no valid dates. You must supply a valid 'dates' argument.")
+    rownames(mat) <- dates
+  }
+  if(!(all(format_orig %in% c(TRUE, FALSE))) || length(format_orig) != 1L)
+    stop("Argument 'format_orig' must be either TRUE or FALSE.")
+
+  # check number of strata
+  n_strata <- vapply(gregexpr(pattern = "\\.", colnames(mat)),
+                     function(x) {out <- length(x); if(out == 1L && x == -1L) 0L else out},
+                     integer(1L))
+  n_strata <- unique(n_strata) + 1L
+  if(length(n_strata) != 1L) stop("Ambiguous number of strata. The number of dots ('.')  must be equal in all column names.")
+
+  # convert to tibble and reshape
+  df <- dplyr::bind_cols(dplyr::tibble(date = as.Date(rownames(mat))),
+                         dplyr::as_tibble(mat)) %>%
+    tidyr::pivot_longer(cols = seq_len(ncol(.))[-1L],
+                        names_to = paste0("stratum_", seq_len(n_strata)),
+                        names_sep = if(n_strata == 1L) NULL else "\\.")
+
+  # guess strata
+  if(reg_age){
+    if(n_strata == 1L){
+      if(all(grepl("^\\D.*$", df$stratum_1))){
+        df <- df %>% dplyr::rename(region = stratum_1)
+      } else {
+        df <- df %>% dplyr::rename(age = stratum_1)
+      }
+    } else {
+      if(all(grepl("^\\D.*$", df$stratum_1))){
+        df <- df %>% rename(region = stratum_1,
+                            age = stratum_2)
+      } else {
+        df <- df %>% rename(age = stratum_1,
+                            region = stratum_2)
+      }
+    }
+    if(format_orig){
+      all_cols <- c("age", "date", "region", "value")
+      if(!all(all_cols %in% colnames(df))){
+        missing <- all_cols[which(!(all_cols %in% colnames(df)))]
+        for(i in missing) if(i == "region") df[[i]] <- "DE" else df[[i]] <- "total"
+      }
+      df <- df %>% select(dplyr::all_of(all_cols))
+    }
+  }
+
+  return(df)
+}
+
+# Formula grid for different combinations of covariates ================================================================
+
 #' Construct formulas for all \code{hhh4} model components
 #'
 #' @param end Either \code{NULL} or \code{character} vector listing all covariates that should be tried in the endemic component.
@@ -77,7 +184,7 @@ covariate_matrix <- function(data){
 #' and determine restrictions to be applied to covariate combinations within each of the components. Restrictions must be stated
 #' in the following form:
 #' \describe{
-#' \item{combined}{A \code{list} whose elements are \code{character} stating which covariates should be considered as one combined
+#' \item{combined}{A \code{list} whose elements are \code{character} vectors stating which covariates should be considered as one combined
 #' covariate. This is useful in case of mutually exclusive indicators like weekday effects as it restricts the resulting formulas to
 #' either contain all indicators or none of them.}
 #' \item{always}{A \code{character} vector containing covariates that must always be included in the formula.}
@@ -189,6 +296,7 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
 #' @return A \code{list} whose elements are formulas containing the covariates specified through the \code{grid}.
 #'
 #' @importFrom surveillance addSeason2formula
+#' @noRd
 grid2formulas <- function(grid, period = NULL){
   nms <- colnames(grid)
   formulas <- lapply(seq_len(nrow(grid)), function(x){
@@ -238,7 +346,7 @@ grid2formulas <- function(grid, period = NULL){
 #' @param comp_restrict A list with elements:
 #'
 #' @return The input grid filtered according to the restrictions passed in \code{comp_restrict}.
-#'
+#' @noRd
 apply_restrictions <- function(grid, comp_restrict){
 
   # if(!is.null(comp_restrict[["combined"]])){

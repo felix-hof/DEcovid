@@ -4,7 +4,7 @@
 \alias{get_map_colors}
 \title{Get map color indices}
 \usage{
-get_map_colors(geoms, cache_dir = NULL)
+get_map_colors(geoms, cache_dir = NULL, enforce_cache = FALSE)
 }
 \arguments{
 \item{geoms}{A single object of class \code{sf} or a list whose elements are of class \code{sf}.}
@@ -23,14 +23,15 @@ If you would like to always use the same cache directory, the simplest way to do
 to run the following line of code: \code{options(rthesis_cache_dir = "path/to/your/cache/directory")}.
 Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
 the options.}
+
+\item{enforce_cache}{Either \code{TRUE} or \code{FALSE} (default). If \code{TRUE}, a cached version
+of the data set is loaded. If there is no cached version, the function returns an error. If \code{FALSE},
+the function returns a cached version if the data set is not older than a usual update cycle of the remote
+source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
 A \code{tibble} with columns \code{region} and \code{color} (contains color indices).
 }
 \description{
 Get map color indices
-}
-\details{
-Under the hood, this function uses the function \code{getColoring}
-from the package \href{https://github.com/hunzikp/MapColoring}{\code{MapColoring}}.
 }

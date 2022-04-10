@@ -4,7 +4,9 @@ Version: 0.0.1
 Authors@R: 
     person("Felix", "Hofmann", , "felix.hofmann2@uzh.ch", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3891-6239"))
-Description: This package provides the functionality that is used for the author's Master thesis. It contains functions to fetch data from various sources.
+Description: This package provides the functionality that is used for the author's Master thesis. 
+    It contains functionality to fetch data from various sources, preprocess this data, and fit models to it. 
+    Furthermore, it also has functions to plot model fits and format tables showing coefficient estimates and standard errors.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -27,9 +29,6 @@ Imports:
     stringr,
     rvest,
     rlang,
-    MapColoring,
     units,
     stats,
     surveillance
-Remotes:
-    github::hunzikp/MapColoring

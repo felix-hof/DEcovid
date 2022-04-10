@@ -4,6 +4,7 @@
 #' @template spat_res
 #' @template age_res
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{list} of length 10. Each list element corresponds to a specific neighbour country or a general
 #' spatial location at the country border. Each list element is a \code{tibble} with two columns \code{lvl3} and \code{value}. The
@@ -16,12 +17,14 @@
 get_boundary_inds <- function(time_res = NULL,
                               spat_res = NULL,
                               age_res = NULL,
-                              cache_dir = NULL){
+                              cache_dir = NULL,
+                              enforce_cache = FALSE){
 
   # Check inputs
   join <- check_res_args(time_res = time_res,
                          spat_res = spat_res,
                          age_res = age_res)
+  check_enforce_cache(enforce_cache)
 
   # set parameters for cacheing
   filename <- "boundary_inds.rds"
@@ -32,11 +35,20 @@ get_boundary_inds <- function(time_res = NULL,
                                 cutoff = 90, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    dat <- get_boundary_inds_from_source(cache_dir, filename)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- get_boundary_inds_from_source(cache_dir, filename)
+    }
   }
+
 
   # aggregate if desired
   if(join){
@@ -69,7 +81,7 @@ get_boundary_inds <- function(time_res = NULL,
 #' @importFrom purrr map_dfc map_int
 #' @importFrom rlang :=
 #' @importFrom tidyr everything
-#'
+#' @noRd
 get_boundary_inds_from_source <- function(cache_dir, filename){
 
   # other definitions

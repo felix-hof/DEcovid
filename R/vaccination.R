@@ -4,6 +4,7 @@
 #' @template spat_res
 #' @template age_res
 #' @template cache_dir
+#' @template enforce_cache
 #'
 #' @return A \code{tibble} with columns \code{date} and \code{value} (contains log-proportion of unvaccinated people).
 #'
@@ -19,12 +20,14 @@
 get_vaccination <- function(time_res = NULL,
                             spat_res = NULL,
                             age_res = NULL,
-                            cache_dir = NULL){
+                            cache_dir = NULL,
+                            enforce_cache = FALSE){
 
   # Check inputs
   join <- check_res_args(time_res = time_res,
                          spat_res = spat_res,
                          age_res = age_res)
+  check_enforce_cache(enforce_cache = enforce_cache)
 
   # set parameters for cacheing
   filename <- "vaccination.rds"
@@ -35,10 +38,18 @@ get_vaccination <- function(time_res = NULL,
                                 cutoff = 1, units = "days")
 
   # get pre-processed data from file or from source
-  if(from_cache){
-    dat <- readRDS(make_path(cache_dir, filename))
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
   } else {
-    dat <- get_vaccination_from_source(cache_dir, filename)
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- get_vaccination_from_source(cache_dir, filename)
+    }
   }
 
   # aggregate if desired

@@ -1,0 +1,5 @@
+TODO:
+
+- improve summary technique (there surely is something more efficient than downsizing everything to the lowest level and then summarise again.
+- summarise temperature with population weights.
+- add function that checks validity of enforce_cache to functions that do not have time_res, spat_res, age_res arguments. DONE.
