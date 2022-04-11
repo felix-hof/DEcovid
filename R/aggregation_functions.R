@@ -4,54 +4,54 @@ spat_f_cases <- sum
 age_f_cases <- sum
 
 # area_size
-time_f_area_size <- function(x){x[!is.na(x)][1]}
+time_f_area_size <- function(x) x[1]
 spat_f_area_size <- sum
-age_f_area_size <- function(x){x[!is.na(x)][1]}
+age_f_area_size <- function(x) x[1]
 
 # holidays
 time_f_holidays <- sum
-spat_f_holidays <- function(x) mean(x, na.rm = TRUE)
-age_f_holidays <- function(x){x[!is.na(x)][1]}
+spat_f_holidays <- function(x) mean(x, na.rm = FALSE)
+age_f_holidays <- function(x) x[1]
 
 # vaccination
-time_f_vaccination <- function(x) log(mean(exp(x), na.rm = TRUE))
-spat_f_vaccination <- function(x) x[!is.na(x)][1]
-age_f_vaccination <- function(x) x[!is.na(x)][1]
+time_f_vaccination <- function(x) log(mean(exp(x), na.rm = FALSE))
+spat_f_vaccination <- function(x) x[1]
+age_f_vaccination <- function(x) x[1]
 
 # testing
-time_f_testing <- function(x) mean(x, na.rm = TRUE)
-spat_f_testing <- function(x) x[!is.na(x)][1]
-age_f_testing <- function(x) x[!is.na(x)][1]
+time_f_testing <- function(x) mean(x, na.rm = FALSE)
+spat_f_testing <- function(x) x[1]
+age_f_testing <- function(x) x[1]
 
 # stringency
-time_f_stringency <- function(x) mean(x, na.rm = TRUE)
-spat_f_stringency <- function(x) x[!is.na(x)][1]
-age_f_stringency <- function(x) x[!is.na(x)][1]
+time_f_stringency <- function(x) mean(x, na.rm = FALSE)
+spat_f_stringency <- function(x) x[1]
+age_f_stringency <- function(x) x[1]
 
 # population
-time_f_population <- function(x) x[!is.na(x)][1]
+time_f_population <- function(x) x[1]
 spat_f_population <- sum
 age_f_population <- sum
 
 # temperature
-time_f_temperature <- function(x) mean(x, na.rm = TRUE)
-spat_f_temperature <- function(x) mean(x, na.rm = TRUE)
-age_f_temperature <- function(x) x[!is.na(x)][1]
+time_f_temperature <- function(x) mean(x, na.rm = FALSE)
+spat_f_temperature <- function(x) mean(x, na.rm = FALSE)
+age_f_temperature <- function(x) x[1]
 
 # urbanicity
-time_f_urbanicity <- function(x) x[!is.na(x)][1]
+time_f_urbanicity <- function(x) x[1]
 spat_f_urbanicity <- function(x) x[which.max(x)]
-age_f_urbanicity <- function(x) x[!is.na(x)][1]
+age_f_urbanicity <- function(x) x[1]
 
 # variants
-time_f_variants <- function(x) x[!is.na(x)][1]
-spat_f_variants <- function(x) x[!is.na(x)][1]
-age_f_variants <- function(x) x[!is.na(x)][1]
+time_f_variants <- function(x) x[1]
+spat_f_variants <- function(x) x[1]
+age_f_variants <- function(x) x[1]
 
 # border indicators
-time_f_border_inds <- function(x) x[!is.na(x)][1]
-spat_f_border_inds <- function(x) ifelse(any(x == 1L), 1L, 0L)
-age_f_border_inds <- function(x) x[!is.na(x)][1]
+time_f_border_inds <- function(x) x[1]
+spat_f_border_inds <- function(x) if(any(x == 1L)) 1L else 0L
+age_f_border_inds <- function(x) x[1]
 
 #' Aggregate data sets across time, space and age groups
 #'

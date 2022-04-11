@@ -252,6 +252,8 @@ utils::globalVariables(c(
   # variants.R
   "country_code", "year_week", "valid_denominator", "number_sequenced", "number_detections_variant",
   "variant", "percent_cases",
+  # density.R
+  "value.pop", "value.area",
   # plotting.R
   "component",
   # table.R
