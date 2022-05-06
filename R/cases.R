@@ -91,7 +91,7 @@ save_agegroups <- function(age, path){
   start_age <- suppressWarnings(as.numeric(gsub("^(\\d+).*$", "\\1", age)))
   ages <- age[order(start_age, na.last = NA)]
   saveRDS(ages, file = path)
-  cat(paste0("Created age groups used in case data set in '", path, "'."), fill = TRUE)
+  if(!file.exists(path)) cat(paste0("Created age groups used in case data set in '", path, "'."), fill = TRUE)
   return(invisible(0))
 }
 
@@ -101,7 +101,9 @@ save_regions <- function(regions, prefix, cache_dir){
   vapply(0:3, function(x){ # loop over NUTS levels
     out <- unique(substr(regions, start = 1, stop = x + 2))
     saveRDS(out, file = make_path(cache_dir, paste0(prefix, x,".rds")))
-    cat(paste0("Created NUTS-", x," levels used in case data set in '", make_path(cache_dir, paste0(prefix, x,".rds")), "'."), fill = TRUE)
+    if(!file.exists(make_path(cache_dir, paste0(prefix, x,".rds"))))
+      cat(paste0("Created NUTS-", x," levels used in case data set in '",
+                 make_path(cache_dir, paste0(prefix, x,".rds")), "'."), fill = TRUE)
     return(0L)
   }, integer(1L))
   return(invisible(0))
@@ -113,9 +115,11 @@ save_dates <- function(dates, file_daily, file_weekly, cache_dir){
   dates <- sort(unique(dates), decreasing = FALSE)
   dates_w <- ISOweek::ISOweek2date(unique(gsub("\\d$", "4", ISOweek::date2ISOweek(dates))))
   saveRDS(dates, file = make_path(cache_dir, file_daily))
-  cat(paste0("Created daily dates used in the case data set in '", make_path(cache_dir, file_daily), "'."), fill = TRUE)
+  if(!file.exists(make_path(cache_dir, file_daily)))
+    cat(paste0("Created daily dates used in the case data set in '", make_path(cache_dir, file_daily), "'."), fill = TRUE)
   saveRDS(dates_w, file = make_path(cache_dir, file_weekly))
-  cat(paste0("Created weekly dates used in the case data set in '", make_path(cache_dir, file_weekly), "'."), fill = TRUE)
+  if(!file.exists(make_path(cache_dir, file_weekly)))
+    cat(paste0("Created weekly dates used in the case data set in '", make_path(cache_dir, file_weekly), "'."), fill = TRUE)
   return(invisible(0))
 }
 
