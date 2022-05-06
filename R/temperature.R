@@ -79,7 +79,7 @@ get_temperature <- function(time_res = NULL,
     if(from_cache){
       temperature <- readRDS(make_path(cache_dir, filename))
     } else {
-      if(file.exists(make_path(cache_dir, "ECA_blend_tg"))) unlink(make_path(cache_dir, "ECA_blend_tg"))
+      if(dir.exists(make_path(cache_dir, "ECA_blend_tg"))) unlink(make_path(cache_dir, "ECA_blend_tg"), recursive = TRUE)
       temperature <- process_temperature(cache_dir, filename)
     }
   }
