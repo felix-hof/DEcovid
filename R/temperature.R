@@ -26,7 +26,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' temperature <- get_temperature(complete = "station")
+#' temperature <- get_temperature(time_res = "weekly", spat_res = 1L, age_res = "no_age", complete = "station")
 #' }
 get_temperature <- function(time_res = NULL,
                             spat_res = NULL,
@@ -50,13 +50,13 @@ get_temperature <- function(time_res = NULL,
   if(!is.numeric(tol) || tol < 0){
     stop("The 'tol' argument must be numeric and larger than 0.")
   }
-  if(complete == "region"){
-    tol <- units::set_units(tol, "km")
-  }
   if(join){
     if(complete != "region")
       warning("Ignoring argument \"complete = '", complete, "'\" and setting it to 'region' as otherwise aggregation does not work.")
     complete <- "region"
+  }
+  if(complete == "region"){
+    tol <- units::set_units(tol, "km")
   }
 
 
@@ -79,7 +79,6 @@ get_temperature <- function(time_res = NULL,
     if(from_cache){
       temperature <- readRDS(make_path(cache_dir, filename))
     } else {
-      if(dir.exists(make_path(cache_dir, "ECA_blend_tg"))) unlink(make_path(cache_dir, "ECA_blend_tg"), recursive = TRUE)
       temperature <- process_temperature(cache_dir, filename)
     }
   }
@@ -348,6 +347,9 @@ process_temperature <- function(cache_dir, filename){
 
   # save this
   saveRDS(temperature, file = make_path(cache_dir, filename))
+
+  # remove the 1 GB EC_blend_tg directory
+  unlink(dir_path, recursive = TRUE)
 
   # return temperature object
   return(temperature)
