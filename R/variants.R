@@ -53,6 +53,7 @@ get_variants <- function(time_res = NULL,
     region <- dims$region
     age <- dims$age
     date <- dims$date
+    earliest_obs <-
     dat <- lapply(dat, function(x){
       dates <- vapply(ISOweek::date2ISOweek(x$date), function(y){
         paste0(sub("\\d$", "", y), 1:7)
@@ -98,7 +99,7 @@ get_variants_from_source <- function(cache_dir, filename){
     dplyr::filter(country_code == "DE") %>%
     dplyr::select(-country_code) %>%
     # implement the hierarchy
-    dplyr::group_by(year_week) %>%
+    dplyr::group_by(year_week, variant) %>%
     {if(any(.[["valid_denominator"]] == "Yes")) dplyr::filter(., valid_denominator == "Yes") else .} %>%
     {if(length(unique(.[["source"]])) > 1) dplyr::filter(., number_sequenced == number_sequenced[which.max(number_sequenced)]) else .} %>%
     dplyr::ungroup() %>%
@@ -113,17 +114,25 @@ get_variants_from_source <- function(cache_dir, filename){
     } %>%
     {
       # Get percentage of cases for each dominant variant
+      # get all the variants that were dominant in at least one week
       dominant_variants <- dplyr::group_by(., year_week) %>%
         dplyr::summarise(variant = variant[which.max(percent_cases)], .groups = "drop") %>%
         dplyr::pull(variant) %>%
         unique()
+      # convert week to date object
+      .$year_week <- ISOweek::ISOweek2date(vapply(strsplit(.$year_week, split = "-", fixed = TRUE),
+                                                     function(x) paste0(x[1], "-W", x[2], "-4"), character(1L)))
+      # get the entire date series
+      unique_dates <- sort(unique(.$year_week))
+      if(!all(diff(unique_dates) == 7)) stop("There are days missing in the creation of the virus variants data.")
       out <- lapply(dominant_variants, function(x){
         .[] %>%
           dplyr::filter(variant == x) %>%
           dplyr::select(year_week, percent_cases) %>%
-          dplyr::mutate(year_week = ISOweek::ISOweek2date(gsub("^(\\d{4})-(\\d{2})", "\\1-W\\2-4", year_week))) %>%
+          dplyr::right_join(y = dplyr::tibble(year_week = unique_dates), by = "year_week") %>%
           dplyr::rename(date = year_week, value = percent_cases) %>%
-          dplyr::arrange(date)
+          dplyr::arrange(date) %>%
+          dplyr::mutate(value = ifelse(is.na(value) & date < date[which(!is.na(value))[1L]], 0, value))
       }) %>%
         magrittr::set_names(dominant_variants)
       out
