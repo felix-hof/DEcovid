@@ -26,7 +26,10 @@
 #'
 #' @examples
 #' \dontrun{
-#' temperature <- get_temperature(time_res = "weekly", spat_res = 1L, age_res = "no_age", complete = "station")
+#' temperature <- get_temperature(time_res = "weekly",
+#'                                spat_res = 1L,
+#'                                age_res = "no_age",
+#'                                complete = "station")
 #' }
 get_temperature <- function(time_res = NULL,
                             spat_res = NULL,

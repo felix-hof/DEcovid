@@ -64,6 +64,9 @@ Get temperature data set for this thesis
 }
 \examples{
 \dontrun{
-temperature <- get_temperature(complete = "station")
+temperature <- get_temperature(time_res = "weekly",
+                               spat_res = 1L,
+                               age_res = "no_age",
+                               complete = "station")
 }
 }

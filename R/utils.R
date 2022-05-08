@@ -257,6 +257,8 @@ utils::globalVariables(c(
   # plotting.R
   "component",
   # table.R
-  "new_name", "trans", "comp", "par", "latex", "est", "sderr"
+  "new_name", "trans", "comp", "par", "latex", "est", "sderr",
+  # weekdays.R
+  "reference"
 ))
 
