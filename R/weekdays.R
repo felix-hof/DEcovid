@@ -15,6 +15,9 @@
 #'
 #' @export
 #'
+#' @importFrom tidyr expand_grid
+#' @importFrom dplyr left_join
+#'
 #' @examples
 #' wkd <- get_weekday(start = as.Date("2020-01-01"), end = as.Date("2020-12-31"), reference = "Monday")
 #' wkd <- get_weekday(age_res = "no_age", spat_res = 2, reference = "Monday")
@@ -52,7 +55,7 @@ get_weekday <- function(spat_res = NULL,
     })
     names(out) <- names(vals)
   } else {
-    if(any(sapply(list(start, end, reference), is.null)))
+    if(any(vapply(list(start, end, reference), is.null, logical(1L))))
       stop("At least one of the arguments \"start\", \"end\", or \"reference\" is NULL. Please set them correctly.")
     out <- get_weekday_vals(start = start, end = end, reference = reference)
   }
@@ -70,6 +73,7 @@ get_weekday <- function(spat_res = NULL,
 #' as effects rather than contrasts.
 #' @noRd
 #'
+#' @importFrom dplyr tibble case_when
 get_weekday_vals <- function(start, end, reference){
   # input checks
   if(length(reference) > 1L || !inherits(reference, "character")) stop("The argument \"reference\" must be a character vector of length 1.")
@@ -106,7 +110,8 @@ get_weekday_vals <- function(start, end, reference){
 #' \code{spat_res} and \code{age_res} have to be set or the arguments \code{start} and \code{end}.
 #'
 #' @export
-#'
+#' @importFrom tidyr expand_grid
+#' @importFrom dplyr left_join
 #' @examples
 #' wke <- get_weekend(start = as.Date("2020-01-01"), end = as.Date("2020-12-31"))
 #' wke <- get_weekend(age_res = "no_age", spat_res = 2)
@@ -137,7 +142,7 @@ get_weekend <-function(spat_res = NULL,
                                       region = res$region)
     out <- dplyr::left_join(x = join_object, y = vals, by = "date")
   } else {
-    if(any(sapply(list(start, end), is.null)))
+    if(any(vapply(list(start, end), is.null, logical(1L))))
       stop("At least one of the arguments \"start\" or \"end\"is NULL. Please set them correctly.")
     out <- get_weekend_vals(start = start, end = end)
   }
@@ -154,6 +159,7 @@ get_weekend <-function(spat_res = NULL,
 #' whether a day is a weekend day.
 #' @noRd
 #'
+#' @importFrom dplyr tibble
 get_weekend_vals <- function(start, end){
   # input checks
   if(!all(vapply(list(start,end), class, character(1L)) == "Date")) stop("Arguments \"start\" and \"end\" must have class \"Date\".")
