@@ -9,7 +9,8 @@ make_formulas(
   epi = NULL,
   ar = NULL,
   period = NULL,
-  restrict = NULL
+  restrict = NULL,
+  envir = globalenv()
 )
 }
 \arguments{
@@ -33,8 +34,9 @@ either contain all indicators or none of them.}
 \item{exclusive}{A \code{list} whose elements are again \code{lists} that contain mutually exclusive covariates. This
 is useful as it allows the resulting formulas to contain maximally one of the covariates listed in these list elements.}
 }
-
 For further clarification on how to construct the restrictions list, see the examples section.}
+
+\item{envir}{The environment that is assigned to the formulas.}
 }
 \value{
 A \code{data.frame} containing all possible combinations of formulas given model components and restrictions on

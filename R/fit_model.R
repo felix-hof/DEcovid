@@ -191,8 +191,8 @@ matrix2df <- function(mat,
 #' \item{exclusive}{A \code{list} whose elements are again \code{lists} that contain mutually exclusive covariates. This
 #' is useful as it allows the resulting formulas to contain maximally one of the covariates listed in these list elements.}
 #' }
-#'
 #' For further clarification on how to construct the restrictions list, see the examples section.
+#' @template envir
 #' @return A \code{data.frame} containing all possible combinations of formulas given model components and restrictions on
 #' covariates.
 #' @export
@@ -212,7 +212,7 @@ matrix2df <- function(mat,
 #' formulas <- make_formulas(end = end, epi = epi, ar = ar,
 #'                           period = 52, restrict = restrict)
 #'
-make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, restrict = NULL){
+make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, restrict = NULL, envir = globalenv()){
 
   # input checks for restriction list
   if(!(is.null(restrict) || is.list(restrict))){
@@ -274,7 +274,7 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
       grid <- cbind(grid, add)
       colnames(grid)[colnames(grid) == paste0("Var", i)] <- restrict[[x]]$combined[[i]]
     }
-    f <- grid2formulas(grid = grid, period = period)
+    f <- grid2formulas(grid = grid, period = period, envir = envir)
     return(f)
   })
   names(comp_grids) <- names(covariates)
@@ -290,14 +290,14 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
 #'
 #' @param grid A \code{data.frame} with covariate names as column names and entries who take the values TRUE or FALSE.
 #' @param period A vector of class \code{integer} and length 1. Must be positive and larger or equal to 1 if set.
-#'
+#' @template envir
 #' @details By default, the formulas always contain an intercept. However, adding random or unit-specific intercepts through the functions
 #'  \code{\link[surveillance]{ri}} or \code{\link[surveillance]{fe}} automatically removes the global intercept.
 #' @return A \code{list} whose elements are formulas containing the covariates specified through the \code{grid}.
 #'
 #' @importFrom surveillance addSeason2formula
 #' @noRd
-grid2formulas <- function(grid, period = NULL){
+grid2formulas <- function(grid, envir, period = NULL){
   nms <- colnames(grid)
   formulas <- lapply(seq_len(nrow(grid)), function(x){
 
@@ -330,7 +330,7 @@ grid2formulas <- function(grid, period = NULL){
     }
 
     # make formula
-    f <- stats::as.formula(paste0("~", paste(covs, collapse = "+")), env = .GlobalEnv)
+    f <- stats::as.formula(paste0("~", paste(covs, collapse = "+")), env = envir)
 
     # add seasonality
     if(hasSeason){
