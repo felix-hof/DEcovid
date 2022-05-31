@@ -56,7 +56,7 @@ get_cases <- function(time_res = "daily",
   }
 
   # save agegroups, regions and dates (used for neighbourhood matrices and truncating the timeframe)
-  if(!from_cache){
+  if(enforce_cache || !from_cache){
     dat %>%
       dplyr::pull(age) %>%
       save_agegroups(age = ., path = make_path(cache_dir, "agegroups.rds"))
@@ -130,7 +130,7 @@ save_dates <- function(dates, file_daily, file_weekly, cache_dir){
 #'
 #' @importFrom readr read_csv cols_only
 #' @importFrom magrittr %>% set_attr
-#' @importFrom dplyr mutate group_by summarise right_join left_join select rename arrange if_else
+#' @importFrom dplyr mutate group_by summarise right_join left_join select rename arrange if_else bind_rows
 #' @importFrom tidyr expand_grid
 #' @noRd
 get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
@@ -140,25 +140,40 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
     dplyr::select(adm_unit, lvl3) %>%
     dplyr::mutate(adm_unit = as.integer(adm_unit))
 
-  ### Change order a bit <- join NUTS correspondence early on and then use these to summarise
-
-
   # Get cases data set from RKI via ESRI
-  rki_data <- "https://opendata.arcgis.com/api/v3/datasets/e408ccf8878541a7ab6f6077a42fd811_0/downloads/data?format=csv&spatialRefId=4326" %>%
-    #"~/Downloads/RKI_COVID-19.csv" %>%
-    readr::read_csv(col_names = TRUE,
-                    col_types = readr::cols_only(
-                      IdLandkreis = "i",
-                      Altersgruppe = "c",
-                      Meldedatum = "c",
-                      NeuerFall = "i",
-                      NeuerTodesfall = "i",
-                      AnzahlFall = "i",
-                      AnzahlTodesfall = "i",
-                      Datenstand = "c"),
-                    trim_ws = TRUE,
-                    progress = FALSE,
-                    show_col_types = FALSE) %>%
+  rki_data <- list(hamburg = "https://opendata.arcgis.com/api/v3/datasets/ab2c1b9c36734faf937cd83dee339517_0/downloads/data?format=csv&spatialRefId=4326",
+                   sachsen = "https://opendata.arcgis.com/api/v3/datasets/3d3235c08d4f44a2afd088546b704902_0/downloads/data?format=csv&spatialRefId=4326",
+                   nsachsen = "https://opendata.arcgis.com/api/v3/datasets/14d82a9addf841789cd6ef5c1f67476a_0/downloads/data?format=csv&spatialRefId=4326",
+                   hessen = "https://opendata.arcgis.com/api/v3/datasets/3ed997d4a8a447f09ab122a1a432b070_0/downloads/data?format=csv&spatialRefId=4326",
+                   mv = "https://opendata.arcgis.com/api/v3/datasets/d6c27576ee034bb78621012738615598_0/downloads/data?format=csv&spatialRefId=4326",
+                   thuringen = "https://opendata.arcgis.com/api/v3/datasets/790f5423e03e49c4baec55a1a232c136_0/downloads/data?format=csv&spatialRefId=4326",
+                   saarland = "https://opendata.arcgis.com/api/v3/datasets/0e59e1262dba4f5f8d6a904113bf7c99_0/downloads/data?format=csv&spatialRefId=4326",
+                   rheinlandPfalz = "https://opendata.arcgis.com/api/v3/datasets/57e385f51a07495cb0a1e00a55ee1b5b_0/downloads/data?format=csv&spatialRefId=4326",
+                   sachsenAnhalt = "https://opendata.arcgis.com/api/v3/datasets/06a1c943a9b845968b5ad0607f5f48f5_0/downloads/data?format=csv&spatialRefId=4326",
+                   schleswig = "https://opendata.arcgis.com/api/v3/datasets/4a648483aedd49b8a6655290181d4c2a_0/downloads/data?format=csv&spatialRefId=4326",
+                   berlin = "https://opendata.arcgis.com/api/v3/datasets/3949d6fd2dc74386b763e451f4c6e384_0/downloads/data?format=csv&spatialRefId=4326",
+                   bayern = "https://opendata.arcgis.com/api/v3/datasets/45258e51f57d43efb612f700a876ae8f_0/downloads/data?format=csv&spatialRefId=4326",
+                   brandenburg = "https://opendata.arcgis.com/api/v3/datasets/5f81692e203a4888a64cb1976aafbd34_0/downloads/data?format=csv&spatialRefId=4326",
+                   badenWurttemberg = "https://opendata.arcgis.com/api/v3/datasets/8a0b7d7c9fb442ffaa512221cf11366e_0/downloads/data?format=csv&spatialRefId=4326",
+                   nrw = "https://opendata.arcgis.com/api/v3/datasets/a99afefd4258435f8af660b6cbed9bf7_0/downloads/data?format=csv&spatialRefId=4326",
+                   bremen = "https://opendata.arcgis.com/api/v3/datasets/f7bdcbe7188545daabe65e6c9e2a4379_0/downloads/data?format=csv&spatialRefId=4326") %>%
+    lapply(function(x){
+      readr::read_csv(x,
+                      col_names = TRUE,
+                      col_types = readr::cols_only(
+                        IdLandkreis = "i",
+                        Altersgruppe = "c",
+                        Meldedatum = "c",
+                        NeuerFall = "i",
+                        NeuerTodesfall = "i",
+                        AnzahlFall = "i",
+                        AnzahlTodesfall = "i",
+                        Datenstand = "c"),
+                      trim_ws = TRUE,
+                      progress = FALSE,
+                      show_col_types = FALSE)
+    }) %>%
+    dplyr::bind_rows() %>%
     magrittr::set_attr(x = .,
                        which = "Datenstand",
                        value = as.Date(sub(",.+", "", .$Datenstand[1]), format = "%d.%m.%Y")) %>%
