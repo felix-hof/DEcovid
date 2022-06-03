@@ -56,7 +56,7 @@ get_cases <- function(time_res = "daily",
   }
 
   # save agegroups, regions and dates (used for neighbourhood matrices and truncating the timeframe)
-  if(enforce_cache || !from_cache){
+  if(!enforce_cache || !from_cache){
     dat %>%
       dplyr::pull(age) %>%
       save_agegroups(age = ., path = make_path(cache_dir, "agegroups.rds"))
