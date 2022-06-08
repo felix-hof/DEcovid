@@ -123,3 +123,56 @@ get_vaccination_from_source <- function(cache_dir, filename){
 
   return(dat)
 }
+
+
+
+
+
+
+
+# # get population data to calculate rate
+# total_population <- sum(get_population(cache_dir = cache_dir)$value)
+#
+#
+# # Get the nuts table
+# nuts <- nuts_table()
+# ## Add Eisenach to Wartburgkreis (as Eisenach is not used in the case data set)
+# nuts <- dplyr::bind_rows(
+#   nuts,
+#   dplyr::bind_cols(dplyr::tibble(LK = "SK Eisenach", adm_unit = "16056"),
+#                    nuts[nuts$adm_unit == "16063", 3:ncol(nuts)])
+# )
+#
+# # get the dates of the case data set
+# dates <- get_case_info(3L, "daily", cache_dir = tempdir())$date
+#
+# # read vaccination data
+# out <- "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv" %>%
+#   readr::read_csv(col_types = readr::cols(LandkreisId_Impfort = "c",
+#                                           Altersgruppe = "c",
+#                                           Impfschutz = "i",
+#                                           Anzahl = "i",
+#                                           Impfdatum = "D"),
+#                   show_col_types = FALSE,
+#                   progress = FALSE) %>%
+#   dplyr::filter(Impfschutz == 1L) %>%
+#   dplyr::left_join(nuts, by = c("LandkreisId_Impfort" = "adm_unit")) %>%
+#   {
+#     unmapped_lk <- .[] %>% filter(is.na(lvl3)) %>% pull(LandkreisId_Impfort) %>% unique()
+#     if(length(setdiff(unmapped_lk, c("17000", "u"))) != 0L) stop("Unexpected unmapped Landkreis detected.")
+#     .[.$LandkreisId_Impfort %in% unmapped_lk, 6:ncol(.)] <- "unknown"
+#     .
+#   } %>%
+#   dplyr::group_by(dplyr::across(c(-LandkreisId_Impfort, -Impfschutz, -Anzahl))) %>%
+#   dplyr::summarise(Anzahl = sum(Anzahl), .groups = "drop")
+#
+# # Join number of vaccinations in each age group and region to the case dates
+# grid <- tidyr::expand_grid(region = unique(out$lvl3),
+#                            age = unique(out$Altersgruppe),
+#                            date = dates)
+# out <- dplyr::left_join(grid, out, by = c("date" = "Impfdatum", "age" = "Altersgruppe", "region" = "lvl3")) %>%
+#   dplyr::select(age, date, region, Anzahl) %>%
+#   # Fill the NAs with 0s as is stated in the description
+#   dplyr::mutate(Anzahl = ifelse(is.na(Anzahl), 0L, Anzahl))
+
+

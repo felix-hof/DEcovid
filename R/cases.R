@@ -182,6 +182,7 @@ get_cases_from_source <- function(cache_dir, filename_cases, filename_deaths){
                   Altersgruppe = ifelse(Altersgruppe == "unbekannt", "unknown", Altersgruppe)) %>%
     # join NUTS IDs and get rid of the Landkreis ID
     dplyr::left_join(lk_info, by = c("IdLandkreis" = "adm_unit")) %>%
+    {if(any(is.na(.$lvl3))) stop("Error in mapping NUTS regions to Landkreise") else .} %>%
     dplyr::select(-IdLandkreis) %>%
     dplyr::group_by(Altersgruppe, Meldedatum, lvl3) %>%
     dplyr::summarise(new_cases = sum(AnzahlFall[NeuerFall >= 0]),
