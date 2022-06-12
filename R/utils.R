@@ -238,7 +238,9 @@ utils::globalVariables(c(
   # urbanicity.R
   "Bevoelkerung", "Land", "RB", "Kreis", "Gemeindename", "population", "value",
   # vaccination.R
-  "personen_erst_kumulativ", "unvac", "log_unvac", "join",
+  "Anzahl", "Impfdatum", "Impfschutz", "LandkreisId_Impfort", "age_case_end", "age_case_start",
+  "age_group_case", "age_group_vac", "age_vac_end", "age_vac_start", "case_contained", "region1",
+  "value.prop_unvac", "value.vac",
   # holidays.R
   "lvl1_name", "holiday", "join",
   # testing.R

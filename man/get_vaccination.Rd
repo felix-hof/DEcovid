@@ -2,7 +2,7 @@
 % Please edit documentation in R/vaccination.R
 \name{get_vaccination}
 \alias{get_vaccination}
-\title{Get the proportion of unvaccinated people from impfdashboard.de or from cache}
+\title{Get the log-proportion of unvaccinated people by different strata}
 \usage{
 get_vaccination(
   time_res = NULL,
@@ -43,12 +43,14 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} with columns \code{date} and \code{value} (contains log-proportion of unvaccinated people).
+A \code{tibble} containing the log-proportion of unvaccinated people stratified by region, age and date.
+The exact resolution depends on the arguments.
 }
 \description{
-Get the proportion of unvaccinated people from impfdashboard.de or from cache
+Get the log-proportion of unvaccinated people by different strata
 }
 \examples{
-vaccination <- get_vaccination()
+vac <- get_vaccination()
+vac <- get_vaccination(time_res = "daily", spat_res = 3L, age_res = "no_age")
 
 }

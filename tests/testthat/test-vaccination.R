@@ -8,6 +8,12 @@ test_that("All dates included", {
   expect_true(all(constructed_date %in% data_date))
 })
 
-test_that("Log-proportion of unvaccinated people is decreasing", {
-  expect_equal(order(dat$value, decreasing = TRUE), seq_len(nrow(dat)))
+test_that("Proportion of unvaccinated people is decreasing", {
+  grid <- expand.grid(region = unique(dat$region), age = unique(dat$age))
+  grid$decreasing <- vapply(seq_len(nrow(grid)), function(x){
+    idx <- with(dat, region == grid$region[x] & age == grid$age[x])
+    data <- dat[idx, ]
+    all(order(data$value, decreasing = TRUE) == seq(1L, nrow(data), 1L))
+  }, logical(1L))
+  expect_true(all(grid$decreasing))
 })
