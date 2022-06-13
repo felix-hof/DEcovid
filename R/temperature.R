@@ -126,13 +126,14 @@ get_temperature <- function(time_res = NULL,
 #' @return A \code{tibble} with columns \code{region} and \code{ts}. The column \code{ts} is a nested column and
 #' contains the temperature time series for the respective NUTS-3 region.
 #'
-#' @importFrom sf st_distance st_drop_geometry st_relate
+#' @importFrom sf st_distance st_drop_geometry st_relate st_crs st_transform
 #' @importFrom dplyr tibble group_by summarise mutate rename bind_rows select arrange
 #' @importFrom tidyr unnest nest
 summarise_temp_to_region <- function(temperature, tol, nb_pattern, cache_dir){
 
   # get geometries of NUTS-3 regions
   geoms <- get_geoms(cache_dir = cache_dir)[[4]]
+  geoms <- sf::st_transform(geoms, sf::st_crs(temperature))
 
   # calculate distances from weather stations to region polygons
   dist <- sf::st_distance(temperature$geometry, geoms$geometry)
