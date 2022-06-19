@@ -1,10 +1,10 @@
-Package: rthesis
+Package: DEcovid
 Title: Functionality for master thesis
 Version: 0.0.1
 Authors@R: 
     person("Felix", "Hofmann", , "felix.hofmann2@uzh.ch", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3891-6239"))
-Description: This package provides the functionality that is used for the author's Master thesis. 
+Description: This package provides functionality to download and preprocess data sets related to potential analyses for COVID-19 related data sets.
     It contains functionality to fetch data from various sources, preprocess this data, and fit models to it. 
     Furthermore, it also has functions to plot model fits and format tables showing coefficient estimates and standard errors.
 License: MIT + file LICENSE

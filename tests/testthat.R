@@ -1,5 +1,5 @@
 library(testthat)
 library(dplyr)
-library(rthesis)
+library(DEcovid)
 
-test_check("rthesis")
+test_check("DEcovid")

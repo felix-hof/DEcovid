@@ -6,8 +6,8 @@
 get_cache_dir <- function(cache_dir){
   if(!is.null(cache_dir)){
     return(cache_dir)
-  } else if(!is.null(getOption("rthesis_cache_dir"))){
-    return(getOption("rthesis_cache_dir"))
+  } else if(!is.null(getOption("DEcovid_cache_dir"))){
+    return(getOption("DEcovid_cache_dir"))
   } else {
     return(tempdir())
   }
