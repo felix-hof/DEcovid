@@ -4,21 +4,29 @@
 \alias{process_temperature}
 \title{Import and process the data from the ECAD textfiles.}
 \usage{
-process_temperature(cache_dir, filename)
+process_temperature(country, start_date, end_date, cache_dir, filename)
 }
 \arguments{
+\item{country}{An ISO 3166-1 abbreviation for the country of interest.}
+
+\item{start_date}{The start date of the period of interest formatted according to ISO 8601 given as a \code{character} vector of length 1.}
+
+\item{end_date}{Either \code{NULL} (the default) or the end date of the period of interest formatted according to
+ISO 8601 given as a \code{character} vector of length 1. If \code{NULL}, the function returns data for the period starting at \code{start_date} until
+the latest point for which data is available.}
+
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.
 The desired cache directory is determined according to the following hierarchy:
 \enumerate{
 \item{If \code{cache_dir} defined by user: Caches files to user defined directory.}
-\item{If \code{cache_dir == NULL} (default): check if \code{getOption("rthesis_cache_dir")} is
+\item{If \code{cache_dir == NULL} (default): check if \code{getOption("DEcovid_cache_dir")} is
 defined and use this as cache directory.}
-\item{If \code{getOption("rthesis_cache_dir")} undefined: Use \code{tempdir()} as
+\item{If \code{getOption("DEcovid_cache_dir")} undefined: Use \code{tempdir()} as
 cache directory.}
 }
 If you would like to always use the same cache directory, the simplest way to do so is
-to run the following line of code: \code{options(rthesis_cache_dir = "path/to/your/cache/directory")}.
+to run the following line of code: \code{options(DEcovid_cache_dir = "path/to/your/cache/directory")}.
 Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
 the options.}
 

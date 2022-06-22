@@ -10,6 +10,9 @@ get_temperature(
   age_res = NULL,
   complete = c("none", "station", "region"),
   tol = 0,
+  country = "DE",
+  start_date = "2020-01-01",
+  end_date = NULL,
   cache_dir = NULL,
   enforce_cache = FALSE
 )
@@ -35,18 +38,26 @@ region's neighbours.}
 \item{tol}{The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
 is still considered as relevant for the temperature within a specific region.}
 
+\item{country}{An ISO 3166-1 alpha-2 abbreviation for the country of interest.}
+
+\item{start_date}{The start date of the period of interest formatted according to ISO 8601 given as a \code{character} vector of length 1.}
+
+\item{end_date}{Either \code{NULL} (the default) or the end date of the period of interest formatted according to
+ISO 8601 given as a \code{character} vector of length 1. If \code{NULL}, the function returns data for the period starting at \code{start_date} until
+the latest point for which data is available.}
+
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.
 The desired cache directory is determined according to the following hierarchy:
 \enumerate{
 \item{If \code{cache_dir} defined by user: Caches files to user defined directory.}
-\item{If \code{cache_dir == NULL} (default): check if \code{getOption("rthesis_cache_dir")} is
+\item{If \code{cache_dir == NULL} (default): check if \code{getOption("DEcovid_cache_dir")} is
 defined and use this as cache directory.}
-\item{If \code{getOption("rthesis_cache_dir")} undefined: Use \code{tempdir()} as
+\item{If \code{getOption("DEcovid_cache_dir")} undefined: Use \code{tempdir()} as
 cache directory.}
 }
 If you would like to always use the same cache directory, the simplest way to do so is
-to run the following line of code: \code{options(rthesis_cache_dir = "path/to/your/cache/directory")}.
+to run the following line of code: \code{options(DEcovid_cache_dir = "path/to/your/cache/directory")}.
 Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
 the options.}
 
@@ -67,6 +78,9 @@ Get temperature data set for this thesis
 temperature <- get_temperature(time_res = "weekly",
                                spat_res = 1L,
                                age_res = "no_age",
-                               complete = "station")
+                               country = "DE",
+                               start_date = "2020-01-01",
+                               tol = 2,
+                               complete = "region")
 }
 }

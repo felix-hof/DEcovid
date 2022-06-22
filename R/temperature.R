@@ -12,6 +12,11 @@
 #' region's neighbours.
 #' @param tol The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
 #' is still considered as relevant for the temperature within a specific region.
+#' @param country An ISO 3166-1 alpha-2 abbreviation for the country of interest.
+#' @param start_date The start date of the period of interest formatted according to ISO 8601 given as a \code{character} vector of length 1.
+#' @param end_date Either \code{NULL} (the default) or the end date of the period of interest formatted according to 
+#' ISO 8601 given as a \code{character} vector of length 1. If \code{NULL}, the function returns data for the period starting at \code{start_date} until
+#' the latest point for which data is available.
 #' @template cache_dir
 #' @template enforce_cache
 #'
@@ -29,13 +34,19 @@
 #' temperature <- get_temperature(time_res = "weekly",
 #'                                spat_res = 1L,
 #'                                age_res = "no_age",
-#'                                complete = "station")
+#'                                country = "DE",
+#'                                start_date = "2020-01-01",
+#'                                tol = 2,
+#'                                complete = "region")
 #' }
 get_temperature <- function(time_res = NULL,
                             spat_res = NULL,
                             age_res = NULL,
                             complete = c("none", "station", "region"),
                             tol = 0,
+                            country = "DE",
+                            start_date = "2020-01-01",
+                            end_date = NULL,
                             cache_dir = NULL,
                             enforce_cache = FALSE){
 
@@ -44,6 +55,10 @@ get_temperature <- function(time_res = NULL,
                          spat_res = spat_res,
                          age_res = age_res)
   check_enforce_cache(enforce_cache = enforce_cache)
+  
+  if(!is.null(end_date) && as.Date(start_date) > as.Date(end_date))
+    stop("End date must be later than start date.")
+  
   # nb_pattern used in this function
   nb_pattern <- "F***1****" # Use "F***T****" if a point where geoms touch is enough for two regions to be neighbours
   complete <-  match.arg(complete)
@@ -82,11 +97,12 @@ get_temperature <- function(time_res = NULL,
     if(from_cache){
       temperature <- readRDS(make_path(cache_dir, filename))
     } else {
-      temperature <- process_temperature(cache_dir, filename)
+      temperature <- process_temperature(country = country, start_date = start_date, end_date = end_date, 
+                                         cache_dir = cache_dir, filename = filename)
     }
   }
 
-  # if we completed stations required, complete
+  # if completed stations required, complete
   if(complete %in% c("station", "region")){
     temperature <- complete_temp_ts(temperature)
   }
@@ -106,7 +122,8 @@ get_temperature <- function(time_res = NULL,
     date <- dims$date
     # print(tidyr::expand_grid(age = age, date = date, region = region))
     # print(temperature)
-    temperature <- tidyr::expand_grid(age = age, date = date, region = region) %>%
+    grid <- tidyr::expand_grid(age = age, date = date, region = region)
+    temperature <-  grid %>%
       dplyr::left_join(y = temperature, by = c("date", "region")) %>%
                          summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
                                         time_f = time_f_temperature, spat_f = spat_f_temperature, age_f = age_f_temperature)
@@ -227,7 +244,7 @@ complete_temp_ts <- function(temperature){
       closest_stations <- order(dist_ws[, x])[-1]
       # Check 3 closest stations with actual temperatures and average temperature for that day
       out$temperature[idx] <- vapply(idx, function(y){
-        closest_station_temperatures <- rep(NA_real_, 3)
+        closest_station_temperatures <- rep(NA_real_, 3L)
         found <- 0
         counter <- 1
         while(any(is.na(closest_station_temperatures))){
@@ -249,6 +266,11 @@ complete_temp_ts <- function(temperature){
 
 #' Import and process the data from the ECAD textfiles.
 #'
+#' @param country An ISO 3166-1 abbreviation for the country of interest.
+#' @param start_date The start date of the period of interest formatted according to ISO 8601 given as a \code{character} vector of length 1.
+#' @param end_date Either \code{NULL} (the default) or the end date of the period of interest formatted according to 
+#' ISO 8601 given as a \code{character} vector of length 1. If \code{NULL}, the function returns data for the period starting at \code{start_date} until
+#' the latest point for which data is available.
 #' @template cache_dir
 #' @param filename The filename under which the processed temperature data should be stored in \code{cache_dir}.
 #'
@@ -256,12 +278,12 @@ complete_temp_ts <- function(temperature){
 #' between the 1st of January and the end of the data set. All temperature time series are of the same length.
 #'
 #' @importFrom readr read_csv
-#' @importFrom dplyr filter %>% mutate select if_else
+#' @importFrom dplyr filter %>% mutate select if_else left_join
 #' @importFrom parallel mclapply detectCores
 #' @importFrom sf st_as_sf st_set_crs st_transform
 #' @importFrom purrr map_dbl map_int
 #'
-process_temperature <- function(cache_dir, filename){
+process_temperature <- function(country, start_date, end_date, cache_dir, filename){
 
   # What the directory with the text files is called
   txt_dir <- "ECA_blend_tg"
@@ -291,47 +313,60 @@ process_temperature <- function(cache_dir, filename){
   temperature <- readr::read_csv(temperature,
                                  show_col_types = FALSE, progress = FALSE,
                                  trim_ws = TRUE) %>%
-    dplyr::filter(CN == "DE") %>%
+    dplyr::filter(CN %in% country) %>%
+    {
+      if(nrow(.) == 0L) stop(paste0("No stations found for country ", country, "."))
+      .
+    } %>% 
     dplyr::mutate(LAT = vapply(strsplit(gsub("\\+", "", LAT), ":"), function(x){x <- as.numeric(x); x[1] + x[2]/60 + x[3]/3600}, double(1L)),
                   LON = vapply(strsplit(gsub("\\+", "", LON), ":"), function(x){x <- as.numeric(x); x[1] + x[2]/60 + x[3]/3600}, double(1L)))
-
+  
+  # Compute what dates the time series should have
+  earliest <- as.Date(start_date) # when should time series start
+  latest <- if(is.null(end_date)) # when should time series end
+    Sys.Date() else as.Date(end_date)
+  desired_dates <- seq(earliest, latest, 1L)
+  
   # Add temperature time series
   temperature$ts <- parallel::mclapply(weather_files, function(x){
-
+    #system(paste0("echo ", x))
     # Throw out stuff not needed
     ts <- gsub("\\s", "", readLines(x))
     ts <- ts[ts != ""]
     ts <- ts[grep("STAID.*SOUID.*DATE.*TG.*Q_TG", ts):length(ts)]
-
+    
     # Find out which lines to actually read
-    earliest <- as.Date("2020-01-01") # when to start each time series
-    ts_start <- as.Date(gsub("^\\d+,\\d+,(\\d+),.+$", "\\1", ts[2]), format = "%Y%m%d")
-    if(ts_start <= earliest){
-      idx <- grep(as.character(format.Date(earliest, format = "%Y%m%d")), ts)
-      ts <- ts[c(1, idx:length(ts))]
-    } else { # complete the time series
-      STAID <- sub("^(\\d+),.+$", "\\1", ts[2])
-      SOUID <- sub("^\\d+,(\\d+),.+$", "\\1", ts[2])
-      ENDSEQ <- as.Date(sub("^\\d+,\\d+,(\\d+),.+$", "\\1", ts[2]), format = "%Y%m%d") - 1
-      DATE <- format(seq(earliest, ENDSEQ, by = 1), "%Y%m%d")
-      TG <- 9999
-      Q_TG <- 9
-      ts <- c(ts[1],
-              paste0(STAID, ",", SOUID, ",", DATE, ",", TG, ",", Q_TG),
-              ts[2:length(ts)])
+    ts_start <- as.Date(sub("^\\d+,\\d+,(\\d+),.+$", "\\1", ts[2]), format = "%Y%m%d")
+    ts_end <- as.Date(sub("^\\d+,\\d+,(\\d+),.+$", "\\1", ts[length(ts)]), format = "%Y%m%d")
+    idx <- seq(ts_start, ts_end, 1L) %in% desired_dates
+    if(!any(idx)){
+      return(dplyr::tibble(DATE = desired_dates,
+                           TG = NA_real_,
+                           Q_TG = 0L))
     }
-
+    ts <- ts[c(TRUE, idx)]
+    
     ts <- ts %>%
       paste(collapse = " \n") %>%
-      readr::read_csv(col_types = "--cnc",
+      readr::read_csv(col_types = "iicni",
                       trim_ws = TRUE) %>%
       dplyr::select(DATE, TG, Q_TG) %>%
-      dplyr::mutate(TG = dplyr::if_else(Q_TG == 9, NA_real_, TG/10), # replace missing temperature with NAs and convert to degrees
-                    Q_TG = dplyr::if_else(Q_TG == 9, "0", Q_TG), # set quality indicator for missing temperature to 0 (as we just introduced NAs)
-                    DATE = as.Date(gsub("(\\d{4})(\\d{2})(\\d{2})", "\\1-\\2-\\3", DATE))) # convert date to date
+      dplyr::mutate(TG = dplyr::if_else(Q_TG == 9L, NA_real_, TG/10), # replace missing temperature with NAs and convert to degrees
+                    Q_TG = dplyr::if_else(Q_TG == 9L, 0L, Q_TG), # set quality indicator for missing temperature to 0 (as we just introduced NAs)
+                    DATE = as.Date(DATE, format = "%Y%m%d")) %>%  # convert date to date
+      dplyr::left_join(dplyr::tibble(DATE = desired_dates), ., by = "DATE") # complete the time series
     return(ts)
   }, mc.cores = parallel::detectCores() - 1)
-
+  
+  # Remove unnecessary NAs in the end
+  idx <- vapply(temperature$ts, function(x){
+    non_na <- !is.na(x$TG)
+    c(which(non_na)[1], length(non_na) - which(rev(non_na))[1] + 1L)
+  }, integer(2L))
+  idx <- c(min(idx[1, ], na.rm = TRUE), max(idx[2, ], na.rm = TRUE))
+  temperature <- temperature %>% 
+    dplyr::mutate(ts = lapply(ts, function(x) x[seq(idx[1], idx[2], 1L), ]) )
+  
   # Set CRS and filter out stations with NA only
   temperature <- sf::st_as_sf(temperature, coords = c("LON", "LAT")) %>%
     sf::st_set_crs(4326) %>%
@@ -340,7 +375,7 @@ process_temperature <- function(cache_dir, filename){
     ## check quality codes(original codes: 0 = valid, 1 = suspect, 9 = missing)
     ## here we have set codes to 0 = valid, 1 = suspect
     ## if Q_TG was originally set to 9, we replaced temperature with NA and set the status code to 0
-    dplyr::mutate(n_suspect = purrr::map_dbl(ts, function(x){sum(as.numeric(x$Q_TG))}),
+    dplyr::mutate(n_suspect = purrr::map_dbl(ts, function(x){sum(x$Q_TG, na.rm = TRUE)}),
                   n_na = purrr::map_dbl(ts, function(x){sum(is.na(x$TG))}),
                   ts = purrr::map(ts, function(x){
                     x %>%

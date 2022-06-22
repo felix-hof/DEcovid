@@ -232,7 +232,7 @@ utils::globalVariables(c(
   # population.R
   "geo", "sex", "time", "unit", "values",
   # temperature.R
-  "CN", "LAT", "LON", "ts", "DATE", "TG", "n_na",
+  "CN", "LAT", "LON", "ts", "DATE", "TG", "n_na", "Q_TG",
   # stringency.R
   "CountryCode", "Date", "StringencyIndex", "value", "join",
   # urbanicity.R
