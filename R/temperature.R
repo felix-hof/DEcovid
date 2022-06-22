@@ -379,9 +379,10 @@ process_temperature <- function(country, start_date, end_date, cache_dir, filena
                   n_na = purrr::map_dbl(ts, function(x){sum(is.na(x$TG))}),
                   ts = purrr::map(ts, function(x){
                     x %>%
-                      dplyr::select(DATE, TG) %>%
-                      dplyr::rename(date = DATE, temperature = TG)
-                  })) %>%
+                      dplyr::select(DATE, TG, Q_TG) %>%
+                      dplyr::rename(date = DATE, temperature = TG, quality = Q_TG)
+                  })
+                  ) %>%
     dplyr::filter(purrr::map_int(ts, function(x){nrow(x)}) != n_na)
 
   # save this
