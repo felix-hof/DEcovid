@@ -2,7 +2,7 @@
 % Please edit documentation in R/urbanicity.R
 \name{get_urbanicity}
 \alias{get_urbanicity}
-\title{Get urbanicity index by NUTS-3 level}
+\title{Get urbanicity index from Destatis}
 \usage{
 get_urbanicity(
   time_res = NULL,
@@ -43,12 +43,15 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS 3 districts,
+A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS districts,
 whereas column \code{value} contains the log-population of the largest city within the respective district.
 }
 \description{
-Get urbanicity index by NUTS-3 level
+Get urbanicity index from Destatis
 }
 \examples{
 urbanicity <- get_urbanicity()
+}
+\references{
+\insertRef{DEcovid:Urbanicity}{DEcovid}
 }

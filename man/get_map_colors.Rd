@@ -2,7 +2,7 @@
 % Please edit documentation in R/map_colors.R
 \name{get_map_colors}
 \alias{get_map_colors}
-\title{Get map color indices}
+\title{Color polygon geometries such that no element has the same color as all of its neighbours.}
 \usage{
 get_map_colors(geoms, cache_dir = NULL, enforce_cache = FALSE)
 }
@@ -33,5 +33,11 @@ source. Otherwise, the data is fetched from remote sources.}
 A \code{tibble} with columns \code{region} and \code{color} (contains color indices).
 }
 \description{
-Get map color indices
+Color polygon geometries such that no element has the same color as all of its neighbours.
+}
+\details{
+This function provides an efficient implementation of the DSATUR-algorithm developed by \insertCite{DEcovid:dsatur;textual}{DEcovid}.
+}
+\references{
+\insertRef{DEcovid:dsatur}{DEcovid}
 }

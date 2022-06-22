@@ -37,3 +37,7 @@ Get the NUTS table used to map German national statistical units to NUTS regions
 nts <- nuts_table()
 
 }
+\references{
+\insertRef{DEcovid:RKINUTS}{DEcovid}
+\insertRef{DEcovid:NUTS}{DEcovid}
+}

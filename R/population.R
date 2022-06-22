@@ -14,6 +14,9 @@
 #'
 #' @export
 #'
+#' @references 
+#' \insertRef{DEcovid:ESpop}{DEcovid}
+#' 
 #' @examples
 #' population <- get_population()
 get_population <- function(time_res = NULL,

@@ -1,4 +1,4 @@
-#' Get urbanicity index by NUTS-3 level
+#' Get urbanicity index from Destatis
 #'
 #' @template time_res
 #' @template spat_res
@@ -6,7 +6,7 @@
 #' @template cache_dir
 #' @template enforce_cache
 #'
-#' @return A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS 3 districts,
+#' @return A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS districts,
 #' whereas column \code{value} contains the log-population of the largest city within the respective district.
 #'
 #' @importFrom magrittr %>%
@@ -14,6 +14,9 @@
 #' @importFrom tidyr expand_grid
 #'
 #' @export
+#' 
+#' @references 
+#' \insertRef{DEcovid:Urbanicity}{DEcovid}
 #'
 #' @examples
 #' urbanicity <- get_urbanicity()

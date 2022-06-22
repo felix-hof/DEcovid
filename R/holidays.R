@@ -11,6 +11,11 @@
 #' @importFrom magrittr %>%
 #' @importFrom dplyr left_join
 #' @importFrom tidyr expand_grid
+#' 
+#' @references 
+#' \insertRef{DEcovid:holidays2020}{DEcovid}
+#' \insertRef{DEcovid:holidays2021}{DEcovid}
+#' \insertRef{DEcovid:holidays2022}{DEcovid}
 #'
 #' @export
 #'

@@ -1,12 +1,16 @@
-#' Get map color indices
-#'
+#' Color polygon geometries such that no element has the same color as all of its neighbours.
+#' 
+#' @details This function provides an efficient implementation of the DSATUR-algorithm developed by \insertCite{DEcovid:dsatur;textual}{DEcovid}.
+#' 
 #' @param geoms A single object of class \code{sf} or a list whose elements are of class \code{sf}.
 #' @template cache_dir
 #' @template enforce_cache
 #'
 #' @return A \code{tibble} with columns \code{region} and \code{color} (contains color indices).
 #'
-#'
+#' @references 
+#' \insertRef{DEcovid:dsatur}{DEcovid}
+#' 
 get_map_colors <- function(geoms, cache_dir = NULL, enforce_cache = FALSE){
 
   check_enforce_cache(enforce_cache = enforce_cache)

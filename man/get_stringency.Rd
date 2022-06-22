@@ -53,3 +53,6 @@ Get stringency index from cache or source
 stringency <- get_stringency()
 
 }
+\references{
+\insertRef{DEcovid:Stringency}{DEcovid}
+}

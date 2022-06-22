@@ -54,3 +54,6 @@ area_size <- get_area_size()
 area_size <- get_area_size(time_res = "daily", spat_res = 1, age_res = "no_age")
 
 }
+\references{
+\insertRef{DEcovid:ESarea}{DEcovid}
+}

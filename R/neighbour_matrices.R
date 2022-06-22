@@ -7,16 +7,17 @@
 #'
 #' @return A \code{matrix} containing the neighbourhood order of the units defined via the \code{by} argument.
 #' @export
-#'
+#' @references 
+#' \insertRef{DEcovid:ESgeoms}{DEcovid}
 #' @examples
 #' nb_regions_agegroups <- get_nb_matrix(nuts_level = 1)
 #' nb_regions <- get_nb_matrix(by = "region", nuts_level = 1)
-#' nb_age <- get_nb_matrix(by = "age", nuts_level = 1)
 #'
 get_nb_matrix <- function(by = c("age", "region"), nuts_level = 3, cache_dir = NULL){
 
 
   if(!(nuts_level %in% 0:3) || length(nuts_level) != 1) stop("Argument 'nuts_level' must be one of c(0, 1, 2, 3).")
+  if(length(by) == 1L && by == "age") stop("Use function 'get_contacts' for contact matrices.")
   if(length(by) == 1 && by == "region" && nuts_level == 0){
     out <- as.matrix(1L)
     rownames(out) <- colnames(out) <- "DE"
@@ -90,7 +91,6 @@ get_nb_matrix <- function(by = c("age", "region"), nuts_level = 3, cache_dir = N
 #'
 #' @return A matrix containing the neighbourhood order between the units
 #'
-#' @importFrom stats toeplitz
 #' @importFrom sf st_relate
 #' @importFrom parallel mclapply detectCores
 #' @importFrom tidyr expand_grid
@@ -103,7 +103,7 @@ compute_nb_matrix <- function(regions, agegroups, geoms, nb_pattern, save_locati
 
   # age groups
   ## age group matrix (relies on age groups being in correct order)
-  age_mat <- stats::toeplitz(seq_along(agegroups) - 1L)
+  age_mat <- matrix(0L, nrow = length(agegroups), ncol = length(agegroups))
 
   # avoid error in R CMD CHECK
   # code taken from https://stackoverflow.com/questions/50571325/r-cran-check-fail-when-using-parallel-functions

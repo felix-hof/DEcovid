@@ -2,7 +2,7 @@
 % Please edit documentation in R/variants.R
 \name{get_variants}
 \alias{get_variants}
-\title{Get a list with binary indicators of the dominant variant}
+\title{Get a list with binary indicators for the dominant SARS-CoV-2 variants from \insertCite{DEcovid:VACdata;textual}{DEcovid}}
 \usage{
 get_variants(
   time_res = NULL,
@@ -46,9 +46,12 @@ source. Otherwise, the data is fetched from remote sources.}
 A \code{list} whose elements are time series indicating which variant was dominant in which week.
 }
 \description{
-Get a list with binary indicators of the dominant variant
+Get a list with binary indicators for the dominant SARS-CoV-2 variants from \insertCite{DEcovid:VACdata;textual}{DEcovid}
 }
 \examples{
 variants <- get_variants()
 variants <- get_variants(time_res = "daily", spat_res = 1, age_res = "no_age")
+}
+\references{
+\insertRef{DEcovid:VACdata}{DEcovid}
 }

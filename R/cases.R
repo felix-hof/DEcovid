@@ -1,4 +1,4 @@
-#' Get the case data from RKI repository
+#' Get the case data from \insertCite{DEcovid:RKIcases;textual}{DEcovid}.
 #'
 #' @template time_res
 #' @template spat_res
@@ -17,7 +17,9 @@
 #' cases <- get_cases(time_res = "daily", spat_res = 1, age_res = "age")
 #' cases <- get_cases(time_res = "daily", spat_res = 3, age_res = "no_age")
 #' }
-#'
+#' 
+#' @references 
+#' \insertRef{DEcovid:RKIcases}{DEcovid}
 #'
 get_cases <- function(time_res = "daily",
                       spat_res = 3,

@@ -51,3 +51,6 @@ Get population by age and NUTS-3 level
 \examples{
 population <- get_population()
 }
+\references{
+\insertRef{DEcovid:ESpop}{DEcovid}
+}

@@ -36,6 +36,8 @@ Compute neighbourhood order matrices stratified by region and/or age group
 \examples{
 nb_regions_agegroups <- get_nb_matrix(nuts_level = 1)
 nb_regions <- get_nb_matrix(by = "region", nuts_level = 1)
-nb_age <- get_nb_matrix(by = "age", nuts_level = 1)
 
+}
+\references{
+\insertRef{DEcovid:ESgeoms}{DEcovid}
 }

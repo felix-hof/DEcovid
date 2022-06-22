@@ -2,7 +2,7 @@
 % Please edit documentation in R/cases.R
 \name{get_cases}
 \alias{get_cases}
-\title{Get the case data from RKI repository}
+\title{Get the case data from \insertCite{DEcovid:RKIcases;textual}{DEcovid}.}
 \usage{
 get_cases(
   time_res = "daily",
@@ -47,7 +47,7 @@ A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the
 The variables are aggregated to the desired level.
 }
 \description{
-Get the case data from RKI repository
+Get the case data from \insertCite{DEcovid:RKIcases;textual}{DEcovid}.
 }
 \examples{
 \dontrun{
@@ -57,5 +57,7 @@ cases <- get_cases(time_res = "daily", spat_res = 1, age_res = "age")
 cases <- get_cases(time_res = "daily", spat_res = 3, age_res = "no_age")
 }
 
-
+}
+\references{
+\insertRef{DEcovid:RKIcases}{DEcovid}
 }

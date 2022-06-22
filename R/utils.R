@@ -1,3 +1,6 @@
+#' @importFrom Rdpack reprompt
+NULL
+
 #' Get cache directory
 #' @description Handles cache directory for data files used within the \code{suspendr} package.
 #' @template cache_dir

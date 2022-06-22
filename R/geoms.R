@@ -7,7 +7,10 @@
 #' contain geometries of German NUTS regions on levels 0-3, whereas the fifth elements contains
 #' geometries of Germany's neighbour countries.
 #' @export
-#'
+#' 
+#' @references 
+#' \insertRef{DEcovid:ESgeoms}{DEcovid}
+#' 
 #' @examples
 #' geoms <- get_geoms()
 get_geoms <- function(cache_dir = NULL, enforce_cache = FALSE){

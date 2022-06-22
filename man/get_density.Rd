@@ -2,7 +2,7 @@
 % Please edit documentation in R/density.R
 \name{get_density}
 \alias{get_density}
-\title{Calculate the population density for each NUTS-region}
+\title{Calculate the population density within each NUTS region}
 \usage{
 get_density(
   time_res = NULL,
@@ -46,7 +46,11 @@ source. Otherwise, the data is fetched from remote sources.}
 A \code{tibble} containing population density at the desired resolution.
 }
 \description{
-Calculate the population density for each NUTS-region
+Calculate the population density within each NUTS region
+}
+\details{
+This function is just a convenience wrapper around \code{\link[DEcovid]{get_population}} and \code{\link[DEcovid]{get_area_size}}.
+For data sources see the help pages for these functions.
 }
 \examples{
 dens <- get_density()

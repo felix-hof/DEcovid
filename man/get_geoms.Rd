@@ -38,3 +38,6 @@ Get geometries for the thesis
 \examples{
 geoms <- get_geoms()
 }
+\references{
+\insertRef{DEcovid:ESgeoms}{DEcovid}
+}

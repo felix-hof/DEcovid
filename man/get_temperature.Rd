@@ -2,7 +2,7 @@
 % Please edit documentation in R/temperature.R
 \name{get_temperature}
 \alias{get_temperature}
-\title{Get temperature data set for this thesis}
+\title{Get temperature data set from European Climate Assessment and Dataset}
 \usage{
 get_temperature(
   time_res = NULL,
@@ -71,7 +71,7 @@ A \code{tibble} containing all weather stations within Germany
 with location and temperature time series starting on 1 January 2020.
 }
 \description{
-Get temperature data set for this thesis
+Get temperature data set from European Climate Assessment and Dataset
 }
 \examples{
 \dontrun{
@@ -83,4 +83,8 @@ temperature <- get_temperature(time_res = "weekly",
                                tol = 2,
                                complete = "region")
 }
+}
+\references{
+\insertRef{DEcovid:TEMPdata}{DEcovid} \cr\cr
+\insertRef{DEcovid:TEMPsource}{DEcovid}
 }

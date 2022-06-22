@@ -14,6 +14,9 @@
 #' @importFrom tidyr expand_grid
 #'
 #' @export
+#' 
+#' @references 
+#' \insertRef{DEcovid:Stringency}{DEcovid}
 #'
 #' @examples
 #' stringency <- get_stringency()

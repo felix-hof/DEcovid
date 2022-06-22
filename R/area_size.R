@@ -14,6 +14,9 @@
 #' @importFrom tidyr expand_grid
 #'
 #' @export
+#' 
+#' @references 
+#' \insertRef{DEcovid:ESarea}{DEcovid}
 #'
 #' @examples
 #' area_size <- get_area_size()

@@ -5,7 +5,10 @@
 #'
 #' @return A \code{tibble} mapping German national administrative to the NUTS classification.
 #' @export
-#'
+#' @references
+#' \insertRef{DEcovid:RKINUTS}{DEcovid}
+#' \insertRef{DEcovid:NUTS}{DEcovid}
+#' 
 #' @examples
 #' nts <- nuts_table()
 #'

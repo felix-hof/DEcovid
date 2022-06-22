@@ -1,4 +1,4 @@
-#' Get testing data from RKI or from cache
+#' Get testing data from RKI
 #'
 #' @template time_res
 #' @template spat_res
@@ -13,6 +13,9 @@
 #' @importFrom dplyr left_join
 #'
 #' @export
+#' 
+#' @references 
+#' \insertRef{DEcovid:TESTdata}{DEcovid}
 #'
 #' @examples
 #' testing <- get_testing()

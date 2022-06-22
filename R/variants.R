@@ -1,4 +1,4 @@
-#' Get a list with binary indicators of the dominant variant
+#' Get a list with binary indicators for the dominant SARS-CoV-2 variants from \insertCite{DEcovid:VACdata;textual}{DEcovid}
 #'
 #' @template time_res
 #' @template spat_res
@@ -8,6 +8,9 @@
 #'
 #' @return A \code{list} whose elements are time series indicating which variant was dominant in which week.
 #' @export
+#' 
+#' @references 
+#' \insertRef{DEcovid:VACdata}{DEcovid}
 #'
 #' @examples
 #' variants <- get_variants()

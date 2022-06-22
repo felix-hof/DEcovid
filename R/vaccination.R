@@ -1,4 +1,4 @@
-#' Get the log-proportion of unvaccinated people by different strata
+#' Get the log-proportion of unvaccinated people by age and region
 #'
 #' @template time_res
 #' @template spat_res
@@ -12,6 +12,12 @@
 #' @importFrom tidyr expand_grid
 #' @importFrom dplyr mutate left_join group_by summarise filter
 #' @importFrom stats weighted.mean
+#' 
+#' @references 
+#' \insertRef{DEcovid:VACdata}{DEcovid} \cr\cr
+#' \insertRef{DEcovid:VACdatadef}{DEcovid}
+#' 
+#' @details The data is retrieved from \insertCite{DEcovid:VACdata;textual}{DEcovid} and additional information can be found in \insertCite{DEcovid:VACdatadef;textual}{DEcovid}.
 #'
 #' @examples
 #' vac <- get_vaccination()

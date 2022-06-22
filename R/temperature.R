@@ -1,4 +1,4 @@
-#' Get temperature data set for this thesis
+#' Get temperature data set from European Climate Assessment and Dataset
 #'
 #' @template time_res
 #' @template spat_res
@@ -12,7 +12,7 @@
 #' region's neighbours.
 #' @param tol The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
 #' is still considered as relevant for the temperature within a specific region.
-#' @param country An ISO 3166-1 alpha-2 abbreviation for the country of interest.
+#' @template country
 #' @param start_date The start date of the period of interest formatted according to ISO 8601 given as a \code{character} vector of length 1.
 #' @param end_date Either \code{NULL} (the default) or the end date of the period of interest formatted according to 
 #' ISO 8601 given as a \code{character} vector of length 1. If \code{NULL}, the function returns data for the period starting at \code{start_date} until
@@ -23,6 +23,10 @@
 #' @return A \code{tibble} containing all weather stations within Germany
 #' with location and temperature time series starting on 1 January 2020.
 #' @export
+#' 
+#' @references 
+#' \insertRef{DEcovid:TEMPdata}{DEcovid} \cr\cr
+#' \insertRef{DEcovid:TEMPsource}{DEcovid}
 #'
 #' @importFrom units set_units
 #' @importFrom magrittr %>%

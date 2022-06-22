@@ -1,4 +1,4 @@
-#' Calculate the population density for each NUTS-region
+#' Calculate the population density within each NUTS region
 #'
 #' @template time_res
 #' @template spat_res
@@ -8,6 +8,9 @@
 #'
 #' @return A \code{tibble} containing population density at the desired resolution.
 #' @export
+#' 
+#' @details This function is just a convenience wrapper around \code{\link[DEcovid]{get_population}} and \code{\link[DEcovid]{get_area_size}}. 
+#' For data sources see the help pages for these functions.
 #'
 #' @examples
 #' dens <- get_density()

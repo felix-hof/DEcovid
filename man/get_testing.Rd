@@ -2,7 +2,7 @@
 % Please edit documentation in R/testing.R
 \name{get_testing}
 \alias{get_testing}
-\title{Get testing data from RKI or from cache}
+\title{Get testing data from RKI}
 \usage{
 get_testing(
   time_res = NULL,
@@ -46,9 +46,12 @@ source. Otherwise, the data is fetched from remote sources.}
 A \code{tibble} with columns \code{date} and \code{value} (contains the testing rate per day and 100'000 people).
 }
 \description{
-Get testing data from RKI or from cache
+Get testing data from RKI
 }
 \examples{
 testing <- get_testing()
 
+}
+\references{
+\insertRef{DEcovid:TESTdata}{DEcovid}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/vaccination.R
 \name{get_vaccination}
 \alias{get_vaccination}
-\title{Get the log-proportion of unvaccinated people by different strata}
+\title{Get the log-proportion of unvaccinated people by age and region}
 \usage{
 get_vaccination(
   time_res = NULL,
@@ -47,10 +47,17 @@ A \code{tibble} containing the log-proportion of unvaccinated people stratified 
 The exact resolution depends on the arguments.
 }
 \description{
-Get the log-proportion of unvaccinated people by different strata
+Get the log-proportion of unvaccinated people by age and region
+}
+\details{
+The data is retrieved from \insertCite{DEcovid:VACdata;textual}{DEcovid} and additional information can be found in \insertCite{DEcovid:VACdatadef;textual}{DEcovid}.
 }
 \examples{
 vac <- get_vaccination()
 vac <- get_vaccination(time_res = "daily", spat_res = 3L, age_res = "no_age")
 
+}
+\references{
+\insertRef{DEcovid:VACdata}{DEcovid} \cr\cr
+\insertRef{DEcovid:VACdatadef}{DEcovid}
 }
