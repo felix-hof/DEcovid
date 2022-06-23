@@ -1,4 +1,4 @@
-#' Get geometries for the thesis
+#' Get geometries for Germany and its neighbour countries
 #'
 #' @template cache_dir
 #' @template enforce_cache
@@ -6,6 +6,8 @@
 #' @return A \code{list} of length 5. All elements of this list are of class \code{sf}. The first four elements
 #' contain geometries of German NUTS regions on levels 0-3, whereas the fifth elements contains
 #' geometries of Germany's neighbour countries.
+#' 
+#' @description The shapefiles used to create the output are provided by \insertCite{DEcovid:ESgeoms;textual}{DEcovid}.
 #' @export
 #' 
 #' @references 

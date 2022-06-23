@@ -2,7 +2,7 @@
 % Please edit documentation in R/weekdays.R
 \name{get_weekday}
 \alias{get_weekday}
-\title{Get weekday covariates for a specific time period or the period relevant for this master thesis}
+\title{Get weekday covariates for a specific time period or the period relevant for COVID-19 case data from Robert Koch-Institut}
 \usage{
 get_weekday(
   spat_res = NULL,
@@ -22,7 +22,7 @@ age groups. Accepted values are \code{"age"} and \code{"no_age"}.}
 
 \item{start}{The beginning of the time period. Must be formated as a "Date" vector of lenght 1.}
 
-\item{end}{The end of the time period. Must be formated as a "Date" vector of lenght 1.}
+\item{end}{The end of the time period. Must be formated as a "Date" vector of length 1.}
 
 \item{reference}{The reference day which does not get an indicator in the output list.
 Must be a character vector of length 1.}
@@ -47,7 +47,7 @@ A list with covariates for each day except the reference day. The covariates are
 as effects rather than contrasts.
 }
 \description{
-Get weekday covariates for a specific time period or the period relevant for this master thesis
+Get weekday covariates for a specific time period or the period relevant for COVID-19 case data from Robert Koch-Institut
 }
 \details{
 All arguments default to NULL because the function has two use cases. Either the the arguments

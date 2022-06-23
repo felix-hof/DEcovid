@@ -1,4 +1,4 @@
-#' Calculate the log-population for each NUTS-region
+#' Calculate the log-population
 #'
 #' @template time_res
 #' @template spat_res
@@ -8,6 +8,8 @@
 #'
 #' @return A \code{tibble} containing the log-population at the desired resolution.
 #' @export
+#' 
+#' @description The function returns the log-population in the desired strata. This function is simply a wrapper around \code{\link[DEcovid]{get_population}}.
 #'
 #' @examples
 #' grav <- get_gravity()

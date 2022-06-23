@@ -46,7 +46,8 @@ source. Otherwise, the data is fetched from remote sources.}
 A \code{tibble} with columns \code{lvl3}, \code{age}, and \code{values}. The column \code{values} contains the population counts.
 }
 \description{
-Get population by age and NUTS-3 level
+This function returns the population of Germany in the desired data. As this is count data, aggregation over all dimensions is done by
+summing the counts.
 }
 \examples{
 population <- get_population()

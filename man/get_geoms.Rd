@@ -2,7 +2,7 @@
 % Please edit documentation in R/geoms.R
 \name{get_geoms}
 \alias{get_geoms}
-\title{Get geometries for the thesis}
+\title{Get geometries for Germany and its neighbour countries}
 \usage{
 get_geoms(cache_dir = NULL, enforce_cache = FALSE)
 }
@@ -33,7 +33,7 @@ contain geometries of German NUTS regions on levels 0-3, whereas the fifth eleme
 geometries of Germany's neighbour countries.
 }
 \description{
-Get geometries for the thesis
+The shapefiles used to create the output are provided by \insertCite{DEcovid:ESgeoms;textual}{DEcovid}.
 }
 \examples{
 geoms <- get_geoms()

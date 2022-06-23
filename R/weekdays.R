@@ -1,4 +1,4 @@
-#' Get weekday covariates for a specific time period or the period relevant for this master thesis
+#' Get weekday covariates for a specific time period or the period relevant for COVID-19 case data from Robert Koch-Institut
 #'
 #' @template spat_res
 #' @template age_res

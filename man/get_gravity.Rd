@@ -2,7 +2,7 @@
 % Please edit documentation in R/gravity.R
 \name{get_gravity}
 \alias{get_gravity}
-\title{Calculate the log-population for each NUTS-region}
+\title{Calculate the log-population}
 \usage{
 get_gravity(
   time_res = NULL,
@@ -46,7 +46,7 @@ source. Otherwise, the data is fetched from remote sources.}
 A \code{tibble} containing the log-population at the desired resolution.
 }
 \description{
-Calculate the log-population for each NUTS-region
+The function returns the log-population in the desired strata. This function is simply a wrapper around \code{\link[DEcovid]{get_population}}.
 }
 \examples{
 grav <- get_gravity()

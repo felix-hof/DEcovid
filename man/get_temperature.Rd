@@ -36,7 +36,7 @@ is no station within a NUTS-3 region plus the tolerance, the time series for tha
 region's neighbours.}
 
 \item{tol}{The tolerance in kilometers from the NUTS-3 region border that is used to determine whether a weather station
-is still considered as relevant for the temperature within a specific region.}
+is still considered as relevant for the temperature within a specific region. This argument is ignored if \code{complete = "none"} or \code{complete = "station"}.}
 
 \item{country}{An ISO 3166-1 alpha-2 abbreviation for the country of interest.}
 
@@ -44,7 +44,7 @@ is still considered as relevant for the temperature within a specific region.}
 
 \item{end_date}{Either \code{NULL} (the default) or the end date of the period of interest formatted according to
 ISO 8601 given as a \code{character} vector of length 1. If \code{NULL}, the function returns data for the period starting at \code{start_date} until
-the latest point for which data is available.}
+the latest point in time for which data is available.}
 
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.
@@ -67,11 +67,33 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} containing all weather stations within Germany
-with location and temperature time series starting on 1 January 2020.
+If \code{complete = "none"} or \code{complete = "station"} the function returns a \code{tibble} containing all weather stations within the selected
+country with location and temperature time series. It contains the following columns:
+\describe{
+\item{STAID}{The ID of the weather station.}
+\item{STANAME}{The name of the weather station. This usually indicates a city or town.}
+\item{CN}{The ISO 3166-1 alpha-2 code of the country, the station is located in.}
+\item{HGHT}{The elevation of the weather station in meters above sea level.}
+\item{ts}{A list column containing \code{tibble}s with the temperature time series at each station. Each of the temperature measurements
+also has a binary quality indicator where 1 denotes that the measurement is suspect and 0 means that the measurement is fine. If \code{complete = "none"}
+the raw data as published by \insertCite{DEcovid:TEMPdata;textual}{DEcovid} is returned which means that the temperature time series may contain missing values
+on some days. If \code{complete = "station"} the missing values are imputed averaging the temperatures measured at the closest three weather stations that
+have non-missing values on the specific day.}
+\item{geometry}{The spatial location of the weather stations in the EPSG 3035 coordinate system.}
+\item{n_suspect}{The number of suspect measurements within the time series of each weather station.}
+\item{n_na}{The number of missing measurements within the time series of each weather station.}
+} \cr
+If \code{complete = "region"} the temperature time series are aggregated to the NUTS 3 level by averaging the time series of all weather stations within
+the specific NUTS region or within \code{tol} kilometers of it's boundaries. The result in this case is a nested \code{tibble} containing columns \emph{region} and
+\emph{ts} where \emph{region} specifies the NUTS-3 region and \emph{ts} contains \code{tibble}s with the temperature time series for each NUTS-3 region. \cr
+If \code{time_res}, \code{spat_res}, and \code{age_res} are not \code{NULL}, the function returns a \code{tibble} with
+columns \emph{region}, \emph{date}, \emph{age}, and \emph{value}. The aggregation over space to larger regions is done by averaging the temperature measurements
+of all NUTS-3 regions within the larger region. Aggregation over time to weekly resolution is also done by averaging the temperatures within the same calendar week.
+Subsequently, the data is simply expanded to fit the chosen age group resolution as temperatures are constant across age groups.
 }
 \description{
-Get temperature data set from European Climate Assessment and Dataset
+This function provides access to temperature data sourced from \insertCite{DEcovid:TEMPdata;textual}{DEcovid}.
+For more info on the output see the "Value" section.
 }
 \examples{
 \dontrun{

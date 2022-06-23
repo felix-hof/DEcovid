@@ -2,7 +2,7 @@
 % Please edit documentation in R/area_size.R
 \name{get_area_size}
 \alias{get_area_size}
-\title{Get area_size from cache or source}
+\title{Get area_size from \insertCite{DEcovid:ESarea;textual}{DEcovid}}
 \usage{
 get_area_size(
   time_res = NULL,
@@ -43,11 +43,13 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} with columns \code{lvl3} and \code{value}. The column \code{value} contains the
-area size for each NUTS 3 region.
+If \code{time_res}, \code{spat_res}, and \code{age_res} are all \code{NULL}, the function returns a \code{tibble} with columns \code{region} and \code{value}.
+The column \code{value} contains the area size for each NUTS-3 region. If the resolutions are set, the data is possibly aggregated (for NUTS levels 0-2) by summing the areas
+and expanded across the remaining dimensions.
 }
 \description{
-Get area_size from cache or source
+This function provides access to NUTS-3 area sizes stratified by age group, NUTS region, and time.
+The data set is provided by \insertCite{DEcovid:ESarea;textual}{DEcovid}.
 }
 \examples{
 area_size <- get_area_size()

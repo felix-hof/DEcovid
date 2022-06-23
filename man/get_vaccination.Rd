@@ -43,14 +43,28 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} containing the log-proportion of unvaccinated people stratified by region, age and date.
+A \code{tibble} containing the log-proportion of unvaccinated people stratified by region, the same age groups as provided in \code{\link[DEcovid]{get_cases}}, and date.
 The exact resolution depends on the arguments.
 }
 \description{
-Get the log-proportion of unvaccinated people by age and region
+The data is retrieved from \insertCite{DEcovid:VACdata;textual}{DEcovid} and additional information about the data set
+can be found in \insertCite{DEcovid:VACdatadef;textual}{DEcovid} (see references for links). This data set contains the daily number of first vaccinations on the
+NUTS-3 level. However, vaccinations are registered where people received the first shot which does not necessarily mean that they live within that NUTS-3 region.
+This is a problem since the proportion of vaccinated people may be larger than 1.
+Therefore, the number of first vaccinations is aggregated over the spatial dimension to the NUTS-1 level in order to calculate proportions.
+Another issue here is that the vaccination data set uses different age groups (5-11, 12-17, 18-59, 60+) than the case data set (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+which is available via \code{\link[DEcovid]{get_cases}}. Therefore, the proportion of unvaccinated people within each of the age groups as defined in the case data set
+is calculated as a population weighted average according to the following formula that shows an example for the age group 15-34: \cr\cr
+
+\deqn{
+  p^{(\text{case})}_{15-34, r, t} = \frac{p^{(\text{vac})}_{12-17, r, t} \cdot \sum\limits_{i = 15}^{17} \text{population}_{i, r} + p^{(\text{vac})}_{18-59, r, t} \cdot \sum\limits_{i = 18}^{34} \text{population}_{i, r}}
+  {\sum\limits_{i = 15}^{34} \text{population}_{i, r}}
 }
-\details{
-The data is retrieved from \insertCite{DEcovid:VACdata;textual}{DEcovid} and additional information can be found in \insertCite{DEcovid:VACdatadef;textual}{DEcovid}.
+where \eqn{p} denotes the proportion of unvaccinated people and the superscripts "(vac)" and "(case)" indicate where the age group has been defined.
+The indices \eqn{t} and \eqn{r} indicate time and NUTS-1 region, respectively. The population in one year age bands on the NUTS-1 level is available
+from \insertCite{DEcovid:ESpoponeyear;textual}{DEcovid}. For resolutions smaller than NUTS-1, i.e. NUTS-3 and NUTS-2, the proportion of unvaccinated people is
+assumed to be the same for all sub-regions of the specific NUTS-1 region. Aggregation over time to weekly resolution returns the value on Wednesday of the specific
+calendar week. Aggregation over age groups or space (to the NUTS 0 level) is done by using population weights.
 }
 \examples{
 vac <- get_vaccination()
@@ -59,5 +73,6 @@ vac <- get_vaccination(time_res = "daily", spat_res = 3L, age_res = "no_age")
 }
 \references{
 \insertRef{DEcovid:VACdata}{DEcovid} \cr\cr
-\insertRef{DEcovid:VACdatadef}{DEcovid}
+\insertRef{DEcovid:VACdatadef}{DEcovid} \cr\cr
+\insertRef{DEcovid:ESpoponeyear}{DEcovid}
 }

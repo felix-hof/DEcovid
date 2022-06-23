@@ -44,13 +44,17 @@ source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
 A \code{list} of length 10. Each list element corresponds to a specific neighbour country or a general
-spatial location at the country border. Each list element is a \code{tibble} with two columns \code{lvl3} and \code{value}. The
+spatial location at the country border. Each list element is a \code{tibble} with two columns \code{region} and \code{value}. The
 former indicates the respective NUTS 3 region whereas the latter indicates if the given region borders the specific country.
 }
 \description{
-Make border indicators from geometries provided by Eurostat
+The function creates boundary indicators for Germany. If this is desired, time and age group dimensions are also added. For the construction of these indicators
+The shapefiles provided by \insertCite{DEcovid:ESgeoms;textual}{DEcovid} are used. Regions are considered neighbours if they share a common border line.
 }
 \examples{
 bounds <- get_boundary_inds()
 
+}
+\references{
+\insertRef{DEcovid:ESgeoms}{DEcovid}
 }

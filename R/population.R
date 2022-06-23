@@ -1,4 +1,7 @@
 #' Get population by age and NUTS-3 level
+#' 
+#' @description This function returns the population of Germany in the desired data. As this is count data, aggregation over all dimensions is done by
+#' summing the counts.
 #'
 #' @template time_res
 #' @template spat_res

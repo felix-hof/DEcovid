@@ -21,7 +21,7 @@ age groups. Accepted values are \code{"age"} and \code{"no_age"}.}
 
 \item{start}{The beginning of the time period. Must be formated as a "Date" vector of lenght 1.}
 
-\item{end}{The end of the time period. Must be formated as a "Date" vector of lenght 1.}
+\item{end}{The end of the time period. Must be formated as a "Date" vector of length 1.}
 
 \item{cache_dir}{This argument indicates the path to the
 desired cache directory. Defaults to \code{NULL}.

@@ -1,4 +1,7 @@
-#' Get area_size from cache or source
+#' Get area_size from \insertCite{DEcovid:ESarea;textual}{DEcovid}
+#' 
+#' @description This function provides access to NUTS-3 area sizes stratified by age group, NUTS region, and time.
+#' The data set is provided by \insertCite{DEcovid:ESarea;textual}{DEcovid}.
 #'
 #' @template time_res
 #' @template spat_res
@@ -6,8 +9,9 @@
 #' @template cache_dir
 #' @template enforce_cache
 #'
-#' @return A \code{tibble} with columns \code{lvl3} and \code{value}. The column \code{value} contains the
-#' area size for each NUTS 3 region.
+#' @return If \code{time_res}, \code{spat_res}, and \code{age_res} are all \code{NULL}, the function returns a \code{tibble} with columns \code{region} and \code{value}. 
+#' The column \code{value} contains the area size for each NUTS-3 region. If the resolutions are set, the data is possibly aggregated (for NUTS levels 0-2) by summing the areas
+#' and expanded across the remaining dimensions.
 #'
 #' @importFrom magrittr %>%
 #' @importFrom dplyr left_join

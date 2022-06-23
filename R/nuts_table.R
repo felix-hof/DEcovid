@@ -1,5 +1,8 @@
 #' Get the NUTS table used to map German national statistical units to NUTS regions
-#'
+#' 
+#' @description This function returns the mapping from German Landkreise to the NUTS system. 
+#' Internally, it uses data from \insertCite{DEcovid:RKINUTS;textual}{DEcovid} and \insertCite{DEcovid:NUTS;textual}{DEcovid}.
+#' 
 #' @template cache_dir
 #' @template enforce_cache
 #'

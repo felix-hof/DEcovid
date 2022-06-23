@@ -47,7 +47,9 @@ A \code{tibble} with columns \code{age}, \code{date}, \code{value} (contains the
 The variables are aggregated to the desired level.
 }
 \description{
-Get the case data from \insertCite{DEcovid:RKIcases;textual}{DEcovid}.
+This function returns the COVID-19 case counts in Germany which are published by \insertCite{DEcovid:RKIcases;textual}{DEcovid}. The data is stratified by
+Landkreis (NUTS-3 level), age groups (0-4, 5-14, 15-34, 35-59, 60-79, 80+) and is available on a daily temporal resolution. The function can also aggregate the data
+to other resolutions which is done by summing the case counts. For more information on the data set see the links in the Reference section.
 }
 \examples{
 \dontrun{
