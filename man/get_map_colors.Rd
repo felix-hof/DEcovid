@@ -4,39 +4,27 @@
 \alias{get_map_colors}
 \title{Color polygon geometries such that no element has the same color as all of its neighbours.}
 \usage{
-get_map_colors(geoms, cache_dir = NULL, enforce_cache = FALSE)
+get_map_colors(geoms)
 }
 \arguments{
-\item{geoms}{A single object of class \code{sf} or a list whose elements are of class \code{sf}.}
-
-\item{cache_dir}{This argument indicates the path to the
-desired cache directory. Defaults to \code{NULL}.
-The desired cache directory is determined according to the following hierarchy:
-\enumerate{
-\item{If \code{cache_dir} defined by user: Caches files to user defined directory.}
-\item{If \code{cache_dir == NULL} (default): check if \code{getOption("DEcovid_cache_dir")} is
-defined and use this as cache directory.}
-\item{If \code{getOption("DEcovid_cache_dir")} undefined: Use \code{tempdir()} as
-cache directory.}
-}
-If you would like to always use the same cache directory, the simplest way to do so is
-to run the following line of code: \code{options(DEcovid_cache_dir = "path/to/your/cache/directory")}.
-Afterwards you can just ignore the \code{cache_dir} argument as it always will use the path you set in
-the options.}
-
-\item{enforce_cache}{Either \code{TRUE} or \code{FALSE} (default). If \code{TRUE}, a cached version
-of the data set is loaded. If there is no cached version, the function returns an error. If \code{FALSE},
-the function returns a cached version if the data set is not older than a usual update cycle of the remote
-source. Otherwise, the data is fetched from remote sources.}
+\item{geoms}{A single object of class \code{sf} or a list whose elements are of class \code{sf}. All of the \code{sf} objects must have two columns,
+a geometry column and another column that is used as an Id for the objects. The Id column may be names or any other unique identifier.}
 }
 \value{
 A \code{tibble} with columns \code{region} and \code{color} (contains color indices).
 }
 \description{
-Color polygon geometries such that no element has the same color as all of its neighbours.
+This function takes polygon geometries as input and returns a color index such that no two
+neighbouring regions have the same color.
 }
 \details{
 This function provides an efficient implementation of the DSATUR-algorithm developed by \insertCite{DEcovid:dsatur;textual}{DEcovid}.
+}
+\examples{
+geoms <- get_geoms() # get geometries
+geoms <- lapply(geoms, function(x) x[, c("region", "geometry")]) # remove the coloring
+geoms <- get_map_colors(geoms)
+
 }
 \references{
 \insertRef{DEcovid:dsatur}{DEcovid}

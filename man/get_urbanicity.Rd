@@ -2,7 +2,7 @@
 % Please edit documentation in R/urbanicity.R
 \name{get_urbanicity}
 \alias{get_urbanicity}
-\title{Get urbanicity index from Destatis}
+\title{Get urbanicity index from \insertCite{DEcovid:Urbanicity}{DEcovid}.}
 \usage{
 get_urbanicity(
   time_res = NULL,
@@ -44,10 +44,11 @@ source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
 A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS districts,
-whereas column \code{value} contains the log-population of the largest city within the respective district.
+whereas column \code{value} contains the log-population of the largest city within the respective district. By setting arguments
+\code{time_res}, \code{spat_res}, and \code{age_res}, the \code{tibble} is expanded to the specified dimensions.
 }
 \description{
-Get urbanicity index from Destatis
+Get urbanicity index from \insertCite{DEcovid:Urbanicity}{DEcovid}.
 }
 \examples{
 urbanicity <- get_urbanicity()

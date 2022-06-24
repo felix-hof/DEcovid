@@ -245,7 +245,7 @@ utils::globalVariables(c(
   "age_group_case", "age_group_vac", "age_vac_end", "age_vac_start", "case_contained", "region1",
   "value.prop_unvac", "value.vac",
   # holidays.R
-  "lvl1_name", "holiday", "join",
+  "lvl1_name", "holiday", "join", "value.hol",
   # testing.R
   "week", "ntests", "trate", "join",
   # area_size.R

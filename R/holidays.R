@@ -1,4 +1,10 @@
-#' Get holiday data from appfield.net or from cache
+#' Get holiday data from appfield.net
+#'
+#' @description Holiday data is scraped from \insertCite{DEcovid:holidays2020}{DEcovid}, \insertCite{DEcovid:holidays2021}{DEcovid}, and \insertCite{DEcovid:holidays2022}{DEcovid}.
+#' It is available on Bundesland (NUTS 1) resolution. The data is processed such that binary indicators are created for each NUTS 1 region where 1 denots a day being a holiday.
+#' Subsequently, the data is either expanded to fit lower smaller resolution (NUTS 2 or NUTS 1). Aggregation to the NUTS 0 level is done by calculating a population weighted average.
+#' The weights are retrieved through \code{\link[DEcovid]{get_population}}. Therefore, on the NUTS 0 level, the result is not a binary indicator anymore but a value between 0 and 1.
+#' Aggregation over time is implemented by summing up the indicators across the different strata. The result of weekly aggregated values is thus not a binary indicator anymore.
 #'
 #' @template time_res
 #' @template spat_res
@@ -6,7 +12,10 @@
 #' @template cache_dir
 #' @template enforce_cache
 #'
-#' @return A \code{tibble} with columns \code{date}, \code{lvl3} and \code{value} (contains the binary holiday indicator).
+#' @return If \code{time_res}, \code{spat_res} and \code{age_res} are all \code{NULL}, the function returns a \code{tibble} with 
+#' columns \code{date}, \code{region} and \code{value} (contains the binary holiday indicator). Otherwise,
+#' the function expands the data to also include a column \code{age} which contains age groups and summarises it to the desired
+#' dimension resolutions.
 #'
 #' @importFrom magrittr %>%
 #' @importFrom dplyr left_join
@@ -21,6 +30,7 @@
 #'
 #' @examples
 #' holidays <- get_holidays()
+#' holidays <- get_holidays(time_res = "weekly", spat_res = 0L, age_res = "no_age")
 #'
 get_holidays <- function(time_res = NULL,
                          spat_res = NULL,
@@ -60,13 +70,23 @@ get_holidays <- function(time_res = NULL,
   # aggregate if desired
   if(join){
     dims <- get_case_info(spat_res = 3, time_res = "daily", cache_dir = cache_dir)
-    region <- dims$region
-    age <- dims$age
-    date <- dims$date
-    dat <- tidyr::expand_grid(age = age, date = date, region = region) %>%
-      dplyr::left_join(y = dat, by = c("date", "region")) %>%
-      summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
-                     time_f = time_f_holidays, spat_f = spat_f_holidays, age_f = age_f_holidays)
+    dat <- tidyr::expand_grid(age = dims$age, date = dims$date, region = dims$region) %>%
+      dplyr::left_join(y = dat, by = c("date", "region"))
+    if(spat_res == 0L){
+      dat <- dat %>% 
+        dplyr::left_join(get_population(spat_res = 3, time_res = "daily", age_res = "age", cache_dir = cache_dir),
+                         by = c("age", "date", "region"),
+                         suffix = c(".hol", ".pop")) %>% 
+        dplyr::mutate(region = substr(region, 1L, 2L)) %>% 
+        dplyr::group_by(age, date, region) %>% 
+        dplyr::summarise(value = stats::weighted.mean(value.hol, w = value.pop), .groups = "drop") %>% 
+        summarise_data(spat_res = 3L, time_res = time_res, age_res = age_res, # spat_res = 3L does no aggregation over space
+                       time_f = time_f_holidays, spat_f = spat_f_holidays, age_f = age_f_holidays)
+    } else {
+      dat <- dat %>% 
+        summarise_data(time_res = time_res, spat_res = spat_res, age_res = age_res,
+                       time_f = time_f_holidays, spat_f = spat_f_holidays, age_f = age_f_holidays) 
+    }
   }
 
   return(dat)

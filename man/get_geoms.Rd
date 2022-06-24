@@ -30,13 +30,17 @@ source. Otherwise, the data is fetched from remote sources.}
 \value{
 A \code{list} of length 5. All elements of this list are of class \code{sf}. The first four elements
 contain geometries of German NUTS regions on levels 0-3, whereas the fifth elements contains
-geometries of Germany's neighbour countries.
+geometries of Germany's neighbour countries. All of the geometries also contain a column \code{color} that contains a color
+index such that no neighbouring regions have the same color. This column is
 }
 \description{
-The shapefiles used to create the output are provided by \insertCite{DEcovid:ESgeoms;textual}{DEcovid}.
+This function downloads shapefiles from \insertCite{DEcovid:ESgeoms;textual}{DEcovid} and creates processes the data
+such that the geometries can be used to create maps. The output of the function is also used to compute symmetric neighbourhood order
+matrices in \code{\link[DEcovid]{get_nb_matrix}}.
 }
 \examples{
 geoms <- get_geoms()
+
 }
 \references{
 \insertRef{DEcovid:ESgeoms}{DEcovid}

@@ -1,4 +1,4 @@
-#' Get urbanicity index from Destatis
+#' Get urbanicity index from \insertCite{DEcovid:Urbanicity}{DEcovid}.
 #'
 #' @template time_res
 #' @template spat_res
@@ -7,7 +7,8 @@
 #' @template enforce_cache
 #'
 #' @return A \code{tibble} with columns \code{region} and \code{value}. Column \code{region} contains NUTS districts,
-#' whereas column \code{value} contains the log-population of the largest city within the respective district.
+#' whereas column \code{value} contains the log-population of the largest city within the respective district. By setting arguments
+#' \code{time_res}, \code{spat_res}, and \code{age_res}, the \code{tibble} is expanded to the specified dimensions.
 #'
 #' @importFrom magrittr %>%
 #' @importFrom dplyr left_join

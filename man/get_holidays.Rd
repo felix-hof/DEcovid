@@ -2,7 +2,7 @@
 % Please edit documentation in R/holidays.R
 \name{get_holidays}
 \alias{get_holidays}
-\title{Get holiday data from appfield.net or from cache}
+\title{Get holiday data from appfield.net}
 \usage{
 get_holidays(
   time_res = NULL,
@@ -43,13 +43,21 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} with columns \code{date}, \code{lvl3} and \code{value} (contains the binary holiday indicator).
+If \code{time_res}, \code{spat_res} and \code{age_res} are all \code{NULL}, the function returns a \code{tibble} with
+columns \code{date}, \code{region} and \code{value} (contains the binary holiday indicator). Otherwise,
+the function expands the data to also include a column \code{age} which contains age groups and summarises it to the desired
+dimension resolutions.
 }
 \description{
-Get holiday data from appfield.net or from cache
+Holiday data is scraped from \insertCite{DEcovid:holidays2020}{DEcovid}, \insertCite{DEcovid:holidays2021}{DEcovid}, and \insertCite{DEcovid:holidays2022}{DEcovid}.
+It is available on Bundesland (NUTS 1) resolution. The data is processed such that binary indicators are created for each NUTS 1 region where 1 denots a day being a holiday.
+Subsequently, the data is either expanded to fit lower smaller resolution (NUTS 2 or NUTS 1). Aggregation to the NUTS 0 level is done by calculating a population weighted average.
+The weights are retrieved through \code{\link[DEcovid]{get_population}}. Therefore, on the NUTS 0 level, the result is not a binary indicator anymore but a value between 0 and 1.
+Aggregation over time is implemented by summing up the indicators across the different strata. The result of weekly aggregated values is thus not a binary indicator anymore.
 }
 \examples{
 holidays <- get_holidays()
+holidays <- get_holidays(time_res = "weekly", spat_res = 0L, age_res = "no_age")
 
 }
 \references{

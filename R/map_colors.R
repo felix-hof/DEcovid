@@ -1,49 +1,76 @@
 #' Color polygon geometries such that no element has the same color as all of its neighbours.
 #' 
+#' @description This function takes polygon geometries as input and returns a color index such that no two 
+#' neighbouring regions have the same color.
+#' 
 #' @details This function provides an efficient implementation of the DSATUR-algorithm developed by \insertCite{DEcovid:dsatur;textual}{DEcovid}.
 #' 
-#' @param geoms A single object of class \code{sf} or a list whose elements are of class \code{sf}.
-#' @template cache_dir
-#' @template enforce_cache
+#' @param geoms A single object of class \code{sf} or a list whose elements are of class \code{sf}. All of the \code{sf} objects must have two columns, 
+#' a geometry column and another column that is used as an Id for the objects. The Id column may be names or any other unique identifier.
 #'
 #' @return A \code{tibble} with columns \code{region} and \code{color} (contains color indices).
+#' 
+#' @importFrom sf st_relate
+#' @importFrom dplyr tibble
+#' 
+#' @export
+#' 
+#' @examples
+#' geoms <- get_geoms() # get geometries
+#' geoms <- lapply(geoms, function(x) x[, c("region", "geometry")]) # remove the coloring
+#' geoms <- get_map_colors(geoms)
 #'
 #' @references 
 #' \insertRef{DEcovid:dsatur}{DEcovid}
 #' 
-get_map_colors <- function(geoms, cache_dir = NULL, enforce_cache = FALSE){
-
-  check_enforce_cache(enforce_cache = enforce_cache)
-
-  # set neighbourhood pattern used for adjacency matrices
-  nb_pattern <- "F***1****" # Use "F***T****" if a touch point is enough for two regions to be nbs
-
-  # set parameters for cacheing
-  filename <- "map_colors.rds"
-  cache_dir <- get_cache_dir(cache_dir)
-
-  # make decision whether to get data from cached file or from source
-  from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
-                                cutoff = 120, units = "days")
-
-  # get pre-processed data from file or from source
-  if(enforce_cache){
-    if(!file.exists(make_path(cache_dir, filename))){
-      stop("There is no cached version of the requested data in 'cache_dir' directory.")
-    } else {
-      dat <- readRDS(make_path(cache_dir, filename))
-    }
-  } else {
-    if(from_cache){
-      dat <- readRDS(make_path(cache_dir, filename))
-    } else {
-      dat <- get_map_colors_from_source(geoms = geoms,
-                                        nb_pattern = nb_pattern, cache_dir = cache_dir,
-                                        filename = filename)
-    }
+get_map_colors <- function(geoms){
+  
+  # convert to list
+  if(inherits(geoms, "sf")){
+    geoms <- list(geoms)
   }
-
-
+  
+  # Input checks
+  # check whether all objects are of class sf,
+  # check whether all objects have 2 columns,
+  # check whether all objects have a geometry column,
+  # check whether name column is unique
+  check <- vapply(geoms, function(x){
+    class <- tryCatch({inherits(x, "sf")},
+                      error = function(cond){FALSE})
+    cols <- tryCatch({isTRUE(ncol(x) == 2L)},
+                     error = function(cond){FALSE})
+    geom_col <- tryCatch({!is.null(attributes(x)$sf_column)},
+                         error = function(cond){FALSE})
+    unique_names <- tryCatch({length(unique(x[[which(colnames(x) != attributes(x)$sf_column)]])) == nrow(x)},
+                             error = function(cond){FALSE})
+    return(c(class, cols, geom_col, unique_names))
+  }, logical(4L))
+  errors <- c("- The object or list passed as 'geoms' is/contains at least one object that is not of class 'sf'.",
+              "- The 'geoms' object(s) must have only two columns.",
+              "- At least one of the 'geoms' object(s) does not have a geometry column.",
+              "- At least one of the 'geoms' object(s) does not have a unique name column.")
+  msg <- errors[apply(check, 1, function(x){any(!x)})]
+  if(length(msg) != 0L){
+    stop(paste0("The 'geoms' object did not pass input checks. The following errors were found:\n",
+                paste0(msg, collapse = "\n")))
+  }
+  
+  # Any point that where two regions touch are considered neighbours
+  nb_pattern <- "F***T****"
+  
+  # get which one is the name column
+  name_cols <- vapply(geoms, function(x){colnames(x)[which(colnames(x) != attributes(x)$sf_column)]}, character(1L))
+  
+  # Get neighbourhood matrices
+  dat <- lapply(seq_along(geoms), function(x){
+    adj_mat <- sf::st_relate(geoms[[x]], pattern = nb_pattern, sparse = FALSE)
+    return(
+      dplyr::tibble(region = geoms[[x]][[name_cols[x]]],
+                    color = factor(dsatur(adj_mat)))
+    )
+  })
+  
   return(dat)
 }
 
@@ -62,7 +89,7 @@ get_map_colors <- function(geoms, cache_dir = NULL, enforce_cache = FALSE){
 #' @importFrom sf st_relate
 #' @importFrom dplyr tibble
 #' @noRd
-get_map_colors_from_source <- function(geoms, nb_pattern, cache_dir, filename){
+get_map_colors_from_source <- function(geoms, nb_pattern){
 
   # convert to list
   if(inherits(geoms, "sf")){
@@ -106,9 +133,6 @@ get_map_colors_from_source <- function(geoms, nb_pattern, cache_dir, filename){
                     color = factor(dsatur(adj_mat)))
     )
   })
-
-  # save this
-  saveRDS(dat, file = make_path(cache_dir, filename))
 
   return(dat)
 }
