@@ -20,7 +20,7 @@ For data fetching and preprocessing: \cr
 \code{\link{get_boundary_inds}} \cr
 \code{\link{get_area_size}} \cr
 \code{\link{get_geoms}} \cr
-\code{\link{get_geoms}} \cr
+\code{\link{get_map_colors}} \cr
 \code{\link{get_temperature}} \cr
 \code{\link{get_holidays}} \cr
 \code{\link{get_population}} \cr
@@ -28,7 +28,6 @@ For data fetching and preprocessing: \cr
 \code{\link{get_testing}} \cr
 \code{\link{get_urbanicity}} \cr
 \code{\link{get_vaccination}} \cr
-\code{\link{get_map_colors}} \cr
 \code{\link{get_variants}} \cr
 \code{\link{get_weekday}} \cr
 \code{\link{get_weekend}} \cr
@@ -43,7 +42,7 @@ matrices used in \code{\link[surveillance]{hhh4}} or \code{\link[hhh4addon]{prof
 \code{\link{df2matrix}} \cr
 \code{\link{matrix2df}} \cr
 \cr
-For fitting lots of different models: \cr
+For generating a grid of formulas for use with \code{\link[surveillance]{hhh4}} or \code{\link[hhh4addon]{profile_par_lag}} from a selection of covariates: \cr
 \cr
 \code{\link{make_formulas}} \cr
 }
