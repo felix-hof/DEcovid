@@ -2,7 +2,7 @@
 % Please edit documentation in R/variants.R
 \name{get_variants}
 \alias{get_variants}
-\title{Get a list with binary indicators for the dominant SARS-CoV-2 variants from \insertCite{DEcovid:VACdata;textual}{DEcovid}}
+\title{Get data on dominant SARS-CoV-2 variants in Germany}
 \usage{
 get_variants(
   time_res = NULL,
@@ -43,10 +43,14 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{list} whose elements are time series indicating which variant was dominant in which week.
+A \code{list} whose elements are time series containing the relative prevalence for each of the SARS-CoV-2 variants that
+were dominant at some point in time.
 }
 \description{
-Get a list with binary indicators for the dominant SARS-CoV-2 variants from \insertCite{DEcovid:VACdata;textual}{DEcovid}
+The function accesses data from \insertCite{DEcovid:VACdata;textual}{DEcovid} and calculates the relative prevalence for
+each of the variants that were dominant at some point in time. If this is desired, the data is extended to match the desired resolution. The
+calculations within the functions are done by dividing the number of cases for each variant by the total number of people sequenced. If there
+was no one sequenced within a specific week, the relative prevalence is assumed to be 0 for all virus variants.
 }
 \examples{
 variants <- get_variants()

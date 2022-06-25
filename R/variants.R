@@ -1,12 +1,19 @@
-#' Get a list with binary indicators for the dominant SARS-CoV-2 variants from \insertCite{DEcovid:VACdata;textual}{DEcovid}
-#'
+#' Get data on dominant SARS-CoV-2 variants in Germany
+#' 
+#' @description The function accesses data from \insertCite{DEcovid:VACdata;textual}{DEcovid} and calculates the relative prevalence for 
+#' each of the variants that were dominant at some point in time. If this is desired, the data is extended to match the desired resolution. The
+#' calculations within the functions are done by dividing the number of cases for each variant by the total number of people sequenced. If there
+#' was no one sequenced within a specific week, the relative prevalence is assumed to be 0 for all virus variants.
+#' 
 #' @template time_res
 #' @template spat_res
 #' @template age_res
 #' @template cache_dir
 #' @template enforce_cache
 #'
-#' @return A \code{list} whose elements are time series indicating which variant was dominant in which week.
+#' @return A \code{list} whose elements are time series containing the relative prevalence for each of the SARS-CoV-2 variants that
+#' were dominant at some point in time.
+#' 
 #' @export
 #' 
 #' @references 
@@ -106,9 +113,8 @@ get_variants_from_source <- function(cache_dir, filename){
     {if(any(.[["valid_denominator"]] == "Yes")) dplyr::filter(., valid_denominator == "Yes") else .} %>%
     {if(length(unique(.[["source"]])) > 1) dplyr::filter(., number_sequenced == number_sequenced[which.max(number_sequenced)]) else .} %>%
     dplyr::ungroup() %>%
-    # set rows to NA if no one was sequenced that week and calculate percentage of cases within each week
-    dplyr::mutate(number_detections_variant = ifelse(number_sequenced == 0L, NA_integer_, number_detections_variant),
-                  percent_cases = number_detections_variant / number_sequenced) %>%
+    # calculate percentages (and return 0 if no one was sequenced that week)
+    dplyr::mutate(percent_cases = ifelse(number_sequenced == 0L, 0L, number_detections_variant / number_sequenced)) %>%
     # if any error or weird stuff is going on: check the part above
     {
       # Throw message if non-valid denominator detected
@@ -119,7 +125,9 @@ get_variants_from_source <- function(cache_dir, filename){
       # Get percentage of cases for each dominant variant
       # get all the variants that were dominant in at least one week
       dominant_variants <- dplyr::group_by(., year_week) %>%
-        dplyr::summarise(variant = variant[which.max(percent_cases)], .groups = "drop") %>%
+        dplyr::summarise(variant = variant[which.max(percent_cases)], 
+                         percent_cases = percent_cases[which.max(percent_cases)], .groups = "drop") %>%
+        dplyr::filter(percent_cases != 0) %>% 
         dplyr::pull(variant) %>%
         unique()
       # convert week to date object
