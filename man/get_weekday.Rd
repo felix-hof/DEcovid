@@ -43,8 +43,8 @@ Afterwards you can just ignore the \code{cache_dir} argument as it always will u
 the options.}
 }
 \value{
-A list with covariates for each day except the reference day. The covariates are coded
-as effects rather than contrasts.
+A list with covariates for each day except the reference day. The covariates are coded binary indicators such that each day is assigned 1 if
+the specific day corresponds to the particular indicator and 0 otherwise.
 }
 \description{
 Get weekday covariates for a specific time period or the period relevant for COVID-19 case data from Robert Koch-Institut

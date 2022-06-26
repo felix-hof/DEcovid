@@ -7,8 +7,8 @@
 #' @template reference
 #' @template cache_dir
 #'
-#' @return A list with covariates for each day except the reference day. The covariates are coded
-#' as effects rather than contrasts.
+#' @return A list with covariates for each day except the reference day. The covariates are coded binary indicators such that each day is assigned 1 if
+#' the specific day corresponds to the particular indicator and 0 otherwise.
 #' @details All arguments default to NULL because the function has two use cases. Either the the arguments
 #' \code{spat_res} and \code{age_res} have to be set or the arguments \code{start}, \code{end},
 #' and \code{reference}.
@@ -89,7 +89,7 @@ get_weekday_vals <- function(start, end, reference){
   out <- lapply(day_names[day_names != reference], function(x){
     dplyr::tibble(date = dates) %>%
       mutate(value = dplyr::case_when(wkd == x ~ 1L,
-                                      wkd == reference ~ -1L,
+                                      #wkd == reference ~ -1L,
                                       TRUE ~ 0L))
   })
   names(out) <- day_names[day_names != reference]
