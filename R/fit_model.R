@@ -211,6 +211,8 @@ matrix2df <- function(mat,
 #'                             always = c("seasonality2")))
 #' formulas <- make_formulas(end = end, epi = epi, ar = ar,
 #'                           period = 52, restrict = restrict)
+#' formulas <- make_formulas(end = end, epi = epi, ar = ar,
+#'                           period = 52, restrict = NULL)
 #'
 make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, restrict = NULL, envir = globalenv()){
 
@@ -240,7 +242,10 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
   }
 
   # Sanity check on restrict object
-  check_restrict(end = end, epi = epi, ar = ar, restrict = restrict)
+  if(!is.null(restrict)){
+    check_restrict(end = end, epi = epi, ar = ar, restrict = restrict)
+  }
+  
 
   # construct formulas from grids
   comp_grids <- lapply(seq_along(covariates), function(x){
@@ -248,14 +253,16 @@ make_formulas <- function(end = NULL, epi = NULL, ar = NULL, period = NULL, rest
     restrict_copy <- restrict[[x]]
     cov_copy <- covariates[[x]]
     # replace "combined" covariates by one variable
-    for(i in seq_along(restrict_copy$combined)){
-      to_replace <- restrict_copy$combined[[i]]
-      restrict_copy <- rapply(restrict_copy,
-                              function(y){
-                                if(any(to_replace %in% y)) unique(replace(y, y %in% to_replace, paste0("Var", i))) else y
-                              }, classes = "character", how = "replace")
-      cov_copy[cov_copy %in% to_replace] <- paste0("Var", i)
-      cov_copy <- unique(cov_copy)
+    if(!is.null(restrict)){
+      for(i in seq_along(restrict_copy$combined)){
+        to_replace <- restrict_copy$combined[[i]]
+        restrict_copy <- rapply(restrict_copy,
+                                function(y){
+                                  if(any(to_replace %in% y)) unique(replace(y, y %in% to_replace, paste0("Var", i))) else y
+                                }, classes = "character", how = "replace")
+        cov_copy[cov_copy %in% to_replace] <- paste0("Var", i)
+        cov_copy <- unique(cov_copy)
+      }
     }
     # expand grid over those covariates that do actually vary
     grid <- expand.grid(lapply(cov_copy[!cov_copy %in% restrict_copy$always], function(...) c(TRUE, FALSE)))

@@ -59,5 +59,7 @@ restrict <- list(end = list(combined = list(weekdays, c("testing", "vaccination"
                             always = c("seasonality2")))
 formulas <- make_formulas(end = end, epi = epi, ar = ar,
                           period = 52, restrict = restrict)
+formulas <- make_formulas(end = end, epi = epi, ar = ar,
+                          period = 52, restrict = NULL)
 
 }
