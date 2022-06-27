@@ -25,7 +25,7 @@
 #' This is a problem since the proportion of vaccinated people may be larger than 1. 
 #' Therefore, the number of first vaccinations is aggregated over the spatial dimension to the NUTS-1 level in order to calculate proportions. 
 #' Another issue here is that the vaccination data set uses different age groups (5-11, 12-17, 18-59, 60+) than the case data set (0-4, 5-14, 15-34, 35-59, 60-79, 80+) 
-#' which is available via \code{\link[DEcovid]{get_cases}}. Therefore, the proportion of unvaccinated people within each of the age groups as defined in the case data set
+#' which is available via \code{\link[DEcovid]{get_cases}}. Thus, the proportion of unvaccinated people within each of the age groups as defined in the case data set
 #' is calculated as a population weighted average according to the following formula that shows an example for the age group 15-34: \cr\cr
 #' 
 #' \deqn{
@@ -37,31 +37,36 @@
 #' from \insertCite{DEcovid:ESpoponeyear;textual}{DEcovid}. For resolutions smaller than NUTS-1, i.e. NUTS-3 and NUTS-2, the proportion of unvaccinated people is
 #' assumed to be the same for all sub-regions of the specific NUTS-1 region. Aggregation over time to weekly resolution returns the value on Wednesday of the specific
 #' calendar week. Aggregation over age groups or space (to the NUTS 0 level) is done by using population weights.
+#' 
+#' The official start of the vaccination campaign in Germany was on 2020-12-27. However, for modeling purposes it is useful to extend the time series in order to not have NAs
+#' in the data. Therefore, it is assumed that before the start of the vaccination campaign, there were no vaccinations and thus the log-proportion of unvaccinated people is 0.
 #'
 #' @examples
 #' vac <- get_vaccination()
 #' vac <- get_vaccination(time_res = "daily", spat_res = 3L, age_res = "no_age")
-#'
+#' vac <- get_vaccination(time_res = "daily", spat_res = 0L, age_res = "no_age")
+#' vac <- get_vaccination(time_res = "daily", spat_res = 1L, age_res = "no_age")
+#' 
 get_vaccination <- function(time_res = NULL,
                             spat_res = NULL,
                             age_res = NULL,
                             cache_dir = NULL,
                             enforce_cache = FALSE){
-
+  
   # Check inputs
   join <- check_res_args(time_res = time_res,
                          spat_res = spat_res,
                          age_res = age_res)
   check_enforce_cache(enforce_cache)
-
+  
   # set up stuff for cacheing
   filename <- "vaccination_processed.rds"
   cache_dir <- get_cache_dir(cache_dir)
-
+  
   # make decision whether to get data from cached file or from source
   from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
                                 cutoff = 1, units = "days")
-
+  
   # get pre-processed data from file or from source
   if(enforce_cache){
     if(!file.exists(make_path(cache_dir, filename))){
@@ -78,14 +83,15 @@ get_vaccination <- function(time_res = NULL,
                                  enforce_cache = enforce_cache)
     }
   }
-
+  
   # aggregate if desired
   if(join){
+    
+    # get desired resolutions
+    dims <- get_case_info(spat_res = spat_res, time_res = time_res, cache_dir = cache_dir)
+    
     if(spat_res != 1L || time_res != "daily" || age_res != "age"){
-
-      # get desired resolutions
-      dims <- get_case_info(spat_res = spat_res, time_res = time_res, cache_dir = cache_dir)
-
+      
       # aggregate over age groups and space if desired
       if(spat_res < 1L || age_res == "no_age"){
         # get population for weights if spat_res is larger than native resolution or we need to aggregate over age groups
@@ -106,31 +112,35 @@ get_vaccination <- function(time_res = NULL,
           dplyr::group_by(region, age, date) %>%
           dplyr::summarise(value = stats::weighted.mean(x = value.vac, w = value.pop), .groups = "drop")
       }
-
+      
       # aggregate over time (just pick the values that are in the time aggregated case dates)
       if(time_res == "weekly")
         dat <- dat %>% dplyr::filter(date %in% dims$date)
-
+      
       # if spatial resolution is higher NUTS level than native, expand
       if(spat_res > 1L){
         grid <- tidyr::expand_grid(age = if(age_res == "age") dims$age else "total",
-                                   date = dims$date,
+                                   date = unique(dat$date),
                                    region = dims$region)
         dat <- grid %>%
           dplyr::mutate(region1 = substr(region, 1, 3L)) %>%
           dplyr::left_join(dat, by = c("age" = "age", "date" = "date", "region1" = "region")) %>%
           dplyr::select(-region1)
-        # Fill with ones before campaign started
-        idx <- which(!is.na(dat$value))[1]
-        if(idx != 1L) dat$value[1:idx] <- 1
       }
-
     }
+    # Expand to case data dates
+    dat <- tidyr::expand_grid(age = if(age_res == "age") dims$age else "total",
+                              date = dims$date,
+                              region = dims$region) %>% 
+      dplyr::left_join(y = dat, by = c("region", "date", "age"))
+    # Fill with ones before campaign started
+    idx <- which(!is.na(dat$value))[1]
+    if(idx != 1L) dat$value[1:idx] <- 1
   }
-
+  
   # take the log
   dat <- dplyr::mutate(dat, value = log(value))
-
+  
   dat
 }
 

@@ -53,7 +53,7 @@ NUTS-3 level. However, vaccinations are registered where people received the fir
 This is a problem since the proportion of vaccinated people may be larger than 1.
 Therefore, the number of first vaccinations is aggregated over the spatial dimension to the NUTS-1 level in order to calculate proportions.
 Another issue here is that the vaccination data set uses different age groups (5-11, 12-17, 18-59, 60+) than the case data set (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
-which is available via \code{\link[DEcovid]{get_cases}}. Therefore, the proportion of unvaccinated people within each of the age groups as defined in the case data set
+which is available via \code{\link[DEcovid]{get_cases}}. Thus, the proportion of unvaccinated people within each of the age groups as defined in the case data set
 is calculated as a population weighted average according to the following formula that shows an example for the age group 15-34: \cr\cr
 
 \deqn{
@@ -65,10 +65,15 @@ The indices \eqn{t} and \eqn{r} indicate time and NUTS-1 region, respectively. T
 from \insertCite{DEcovid:ESpoponeyear;textual}{DEcovid}. For resolutions smaller than NUTS-1, i.e. NUTS-3 and NUTS-2, the proportion of unvaccinated people is
 assumed to be the same for all sub-regions of the specific NUTS-1 region. Aggregation over time to weekly resolution returns the value on Wednesday of the specific
 calendar week. Aggregation over age groups or space (to the NUTS 0 level) is done by using population weights.
+
+The official start of the vaccination campaign in Germany was on 2020-12-27. However, for modeling purposes it is useful to extend the time series in order to not have NAs
+in the data. Therefore, it is assumed that before the start of the vaccination campaign, there were no vaccinations and thus the log-proportion of unvaccinated people is 0.
 }
 \examples{
 vac <- get_vaccination()
 vac <- get_vaccination(time_res = "daily", spat_res = 3L, age_res = "no_age")
+vac <- get_vaccination(time_res = "daily", spat_res = 0L, age_res = "no_age")
+vac <- get_vaccination(time_res = "daily", spat_res = 1L, age_res = "no_age")
 
 }
 \references{
