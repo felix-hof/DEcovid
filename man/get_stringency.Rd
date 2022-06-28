@@ -2,7 +2,7 @@
 % Please edit documentation in R/stringency.R
 \name{get_stringency}
 \alias{get_stringency}
-\title{Get stringency index from \insertCite{DEcovid:Stringency;textual}{DEcovid}}
+\title{Get stringency index for Germany from \insertCite{DEcovid:Stringency;textual}{DEcovid}}
 \usage{
 get_stringency(
   time_res = NULL,
@@ -44,7 +44,9 @@ source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
 A \code{tibble} with columns \code{date} and \code{value}. The column \code{value} contains the
-stringency index for each day.
+stringency index for each day. If the arguments \code{time_res}, \code{spat_res}, and \code{age_res} are specified,
+the index is expanded over the regions and age groups defined by the case data set that can be accesed via \code{\link[DEcovid]{get_cases}}.
+If weekly data is requested, the average stringency index for each specific calendar week is returned.
 }
 \description{
 The data set is retrieved from \insertCite{DEcovid:Stringency;textual}{DEcovid} and contains the stringency index. This

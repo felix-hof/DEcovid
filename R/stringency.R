@@ -1,4 +1,4 @@
-#' Get stringency index from \insertCite{DEcovid:Stringency;textual}{DEcovid}
+#' Get stringency index for Germany from \insertCite{DEcovid:Stringency;textual}{DEcovid}
 #'
 #' @description The data set is retrieved from \insertCite{DEcovid:Stringency;textual}{DEcovid} and contains the stringency index. This
 #' is an index that quantifies the strictness of government imposed polcies within the context of the COVID-19 pandemic. The index is 
@@ -13,7 +13,9 @@
 #' @template enforce_cache
 #'
 #' @return A \code{tibble} with columns \code{date} and \code{value}. The column \code{value} contains the
-#' stringency index for each day.
+#' stringency index for each day. If the arguments \code{time_res}, \code{spat_res}, and \code{age_res} are specified,
+#' the index is expanded over the regions and age groups defined by the case data set that can be accesed via \code{\link[DEcovid]{get_cases}}.
+#' If weekly data is requested, the average stringency index for each specific calendar week is returned.
 #'
 #' @importFrom magrittr %>%
 #' @importFrom dplyr left_join
