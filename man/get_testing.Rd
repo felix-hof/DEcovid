@@ -2,7 +2,7 @@
 % Please edit documentation in R/testing.R
 \name{get_testing}
 \alias{get_testing}
-\title{Get testing data from RKI}
+\title{Get testing data from \insertCite{DEcovid:TESTdata;textual}{DEcovid}}
 \usage{
 get_testing(
   time_res = NULL,
@@ -43,10 +43,13 @@ the function returns a cached version if the data set is not older than a usual 
 source. Otherwise, the data is fetched from remote sources.}
 }
 \value{
-A \code{tibble} with columns \code{date} and \code{value} (contains the testing rate per day and 100'000 people).
+A \code{tibble} with columns \code{date} and \code{value} (contains the testing rate per day and 1'000 people).
 }
 \description{
-Get testing data from RKI
+This function returns data on the testing rate which is defined as the number of tests that were
+registered by \insertCite{DEcovid:TESTdata;textual}{DEcovid} per million inhabitants per day in all of Germany. If
+the specific resolutions are specified, the testing rate is just extended across the regions and age groups.
+This means that, given a particular day, all regions and age groups are assumed to have the same testing rate.
 }
 \examples{
 testing <- get_testing()

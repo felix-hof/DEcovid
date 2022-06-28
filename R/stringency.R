@@ -1,4 +1,10 @@
-#' Get stringency index from cache or source
+#' Get stringency index from \insertCite{DEcovid:Stringency;textual}{DEcovid}
+#'
+#' @description The data set is retrieved from \insertCite{DEcovid:Stringency;textual}{DEcovid} and contains the stringency index. This
+#' is an index that quantifies the strictness of government imposed polcies within the context of the COVID-19 pandemic. The index is 
+#' composed from various sub-indices that each relate to different types of policies. Some of the sub-indices directly describe anti-contagion
+#' policies but various other measures such as economical support for businesses are also reflected. For more information on the stringency index
+#' see the link in the references section.
 #'
 #' @template time_res
 #' @template spat_res

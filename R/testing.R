@@ -1,4 +1,9 @@
-#' Get testing data from RKI
+#' Get testing data from \insertCite{DEcovid:TESTdata;textual}{DEcovid}
+#' 
+#' @description This function returns data on the testing rate which is defined as the number of tests that were 
+#' registered by \insertCite{DEcovid:TESTdata;textual}{DEcovid} per million inhabitants per day in all of Germany. If 
+#' the specific resolutions are specified, the testing rate is just extended across the regions and age groups.
+#' This means that, given a particular day, all regions and age groups are assumed to have the same testing rate.
 #'
 #' @template time_res
 #' @template spat_res
@@ -6,7 +11,7 @@
 #' @template cache_dir
 #' @template enforce_cache
 #'
-#' @return A \code{tibble} with columns \code{date} and \code{value} (contains the testing rate per day and 100'000 people).
+#' @return A \code{tibble} with columns \code{date} and \code{value} (contains the testing rate per day and 1'000 people).
 #'
 #' @importFrom tidyr expand_grid
 #' @importFrom magrittr %>%
@@ -110,7 +115,7 @@ get_testing_from_source <- function(cache_dir, filename){
     } %>%
     # calculate testing rate per 100'000
     dplyr:: mutate(population = total_population,
-                   trate = ntests * 100000 / population) %>%
+                   trate = ntests * 1000 / population) %>%
     # make a full date sequence
     dplyr::right_join(y = dplyr::tibble(date = seq(min(.$week), max(.$week) + 6, by = 1)), by = c("week" = "date")) %>%
     dplyr::arrange(week) %>%
