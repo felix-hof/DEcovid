@@ -30,8 +30,10 @@ source. Otherwise, the data is fetched from remote sources.}
 \value{
 A \code{list} of length 5. All elements of this list are of class \code{sf}. The first four elements
 contain geometries of German NUTS regions on levels 0-3, whereas the fifth elements contains
-geometries of Germany's neighbour countries. All of the geometries also contain a column \code{color} that contains a color
-index such that no neighbouring regions have the same color. This column is
+geometries of Germany's neighbour countries, where France's overseas territories have been cut off.
+All of the geometries also contain a column \code{color} that contains a color
+index such that no neighbouring regions have the same color. This column is constructed by an internal call to
+\code{\link[DEcovid]{get_map_colors}}.
 }
 \description{
 This function downloads shapefiles from \insertCite{DEcovid:ESgeoms;textual}{DEcovid} and creates processes the data

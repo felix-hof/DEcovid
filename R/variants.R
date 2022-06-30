@@ -1,6 +1,6 @@
 #' Get data on dominant SARS-CoV-2 variants in Germany
 #' 
-#' @description The function accesses data from \insertCite{DEcovid:VACdata;textual}{DEcovid} and calculates the relative prevalence for 
+#' @description The function accesses data from \insertCite{DEcovid:VARdata;textual}{DEcovid} and calculates the relative prevalence for 
 #' each of the variants that were dominant at some point in time. If this is desired, the data is extended to match the desired resolution. The
 #' calculations within the functions are done by dividing the number of cases for each variant by the total number of people sequenced. If there
 #' was no one sequenced within a specific week, the relative prevalence is assumed to be 0 for all virus variants.
@@ -17,7 +17,7 @@
 #' @export
 #' 
 #' @references 
-#' \insertRef{DEcovid:VACdata}{DEcovid}
+#' \insertRef{DEcovid:VARdata}{DEcovid}
 #'
 #' @examples
 #' variants <- get_variants()

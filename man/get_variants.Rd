@@ -47,7 +47,7 @@ A \code{list} whose elements are time series containing the relative prevalence 
 were dominant at some point in time.
 }
 \description{
-The function accesses data from \insertCite{DEcovid:VACdata;textual}{DEcovid} and calculates the relative prevalence for
+The function accesses data from \insertCite{DEcovid:VARdata;textual}{DEcovid} and calculates the relative prevalence for
 each of the variants that were dominant at some point in time. If this is desired, the data is extended to match the desired resolution. The
 calculations within the functions are done by dividing the number of cases for each variant by the total number of people sequenced. If there
 was no one sequenced within a specific week, the relative prevalence is assumed to be 0 for all virus variants.
@@ -57,5 +57,5 @@ variants <- get_variants()
 variants <- get_variants(time_res = "daily", spat_res = 1, age_res = "no_age")
 }
 \references{
-\insertRef{DEcovid:VACdata}{DEcovid}
+\insertRef{DEcovid:VARdata}{DEcovid}
 }
