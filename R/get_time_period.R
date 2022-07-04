@@ -16,6 +16,7 @@
 #' @export
 #' 
 #' @importFrom stats lag
+#' @importFrom dplyr arrange
 #'
 #' @examples
 #' \dontrun{
@@ -37,6 +38,11 @@ get_time_period <- function(data_list, time_res){
   idx <- vapply(data_list, is.data.frame, logical(1L))
   has_date <- vapply(data_list[idx], function(x) "date" %in% colnames(x) && inherits(x$date, "Date"), logical(1L))
   if(!all(has_date)) stop("All data frames in data_list must have a column \"date\" which contains objects of class \"Date\".")
+  
+  data_list[sapply(data_list, is.data.frame)] <- lapply(data_list[sapply(data_list, is.data.frame)], function(x){
+    x %>% 
+      dplyr::arrange(date)
+  })
   
   # get index of those that are actual data frames (seasonality is not a data frame)
   idx <- vapply(data_list, is.data.frame, logical(1L))

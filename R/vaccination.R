@@ -132,7 +132,8 @@ get_vaccination <- function(time_res = NULL,
     dat <- tidyr::expand_grid(age = if(age_res == "age") dims$age else "total",
                               date = dims$date,
                               region = dims$region) %>% 
-      dplyr::left_join(y = dat, by = c("region", "date", "age"))
+      dplyr::left_join(y = dat, by = c("region", "date", "age")) %>% 
+      dplyr::arrange(date, age, region)
     # Fill with ones before campaign started
     idx <- which(!is.na(dat$value))[1]
     if(idx != 1L) dat$value[1:idx] <- 1
