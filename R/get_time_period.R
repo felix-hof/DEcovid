@@ -41,7 +41,7 @@ get_time_period <- function(data_list, time_res){
   # get index of those that are actual data frames (seasonality is not a data frame)
   idx <- vapply(data_list, is.data.frame, logical(1L))
   # get the number of units
-  n_units <- unique(vapply(data_list[idx], function(y) length(unique(y$region)), integer(1L)))
+  n_units <- unique(vapply(data_list[idx], function(y) nrow(unique(y[, c("age", "region")])), integer(1L)))
   if(length(n_units) != 1L) stop("There should be the same number of units in all covariates.")
   # how many times would we expect a date to be in there
   expected_times <- sum(idx) * n_units
