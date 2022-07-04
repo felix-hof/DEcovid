@@ -148,3 +148,114 @@ compute_nb_matrix <- function(regions, agegroups, geoms, nb_pattern, save_locati
 
   return(combined_mat)
 }
+
+#' Get a contact matrix for Germany
+#' 
+#' @description The contact matrix is sourced from \insertCite{DEcovid:MOBS;textual}{DEcovid} and aggregated using the population data available from
+#' \insertRef{DEcovid:ESpoponeyear}{DEcovid}.
+#'
+#' @template cache_dir 
+#' @template enforce_cache 
+#'
+#' @return A contact matrix aggregated to the age groups defined in the case data set available through \code{\link[DEcovid]{get_cases}}.
+#' @export
+#' @references 
+#' \insertRef{DEcovid:MOBS}{DEcovid}
+#'
+#' @examples
+#' C <- get_c_matrix()
+#' 
+get_c_matrix <- function(cache_dir = NULL,
+                         enforce_cache = FALSE){
+  
+  # set parameters for cacheing
+  filename <- "contact_matrix.rds"
+  cache_dir <- get_cache_dir(cache_dir)
+  
+  # make decision whether to get data from cached file or from source
+  from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
+                                cutoff = 90, units = "days")
+  
+  # get pre-processed data from file or from source
+  if(enforce_cache){
+    if(!file.exists(make_path(cache_dir, filename))){
+      stop("There is no cached version of the requested data in 'cache_dir' directory.")
+    } else {
+      dat <- readRDS(make_path(cache_dir, filename))
+    }
+  } else {
+    if(from_cache){
+      dat <- readRDS(make_path(cache_dir, filename))
+    } else {
+      dat <- get_c_matrix_from_source(filename, cache_dir, enforce_cache = enforce_cache)
+    }
+  }
+  
+  return(dat)
+}
+
+
+#' Get contact matrix from source
+#'
+#' @param filename The name of the file saved in cache
+#' @template cache_dir 
+#' @template enforce_cache 
+#'
+#' @return A contact matrix aggregated to the age groups defined in the case data set available through \code{\link[DEcovid]{get_cases}}.
+#' @noRd
+#' @importFrom hhh4contacts aggregateC
+#' @importFrom stats setNames
+#' @importFrom utils read.csv
+get_c_matrix_from_source <- function(filename, cache_dir, enforce_cache){
+  
+  # get matrix
+  C <- "https://raw.githubusercontent.com/mobs-lab/mixing-patterns/main/data/contact_matrices/Germany_country_level_M_overall_contact_matrix_85.csv" %>% 
+    read.csv(header = FALSE) %>% 
+    as.matrix()
+  # label it
+  row_col_names <- ifelse(nchar(0 : (ncol(C) - 1)) == 1,
+                          paste0(0, 0 : (ncol(C) - 1)),
+                          (0 : (ncol(C) - 1)))
+  row_col_names <- paste0(row_col_names, "-", row_col_names)
+  row_col_names[length(row_col_names)] <- sub("-.+", "+", row_col_names[length(row_col_names)])
+  dimnames(C) <- list(participant = row_col_names, contact = row_col_names)
+  
+  # get population weights for the current age groups
+  pop <- get_one_year_population(type = "raw", cache_dir = cache_dir, enforce_cache = enforce_cache) %>% 
+    dplyr::group_by(age) %>% 
+    dplyr::summarise(values = sum(values)) %>% 
+    dplyr::mutate(age_lab = ifelse(nchar(age) == 1L, paste0(0, age), age),
+                  age_lab = paste0(age_lab, "-", age_lab),
+                  age_lab = ifelse(age >= ncol(C) - 1, paste0(ncol(C) - 1, "+"), age_lab)) %>% 
+    dplyr::group_by(age_lab) %>% 
+    dplyr::summarise(values = sum(values))
+  
+  # get the age groups
+  ages <- unique(get_population(cache_dir = cache_dir, enforce_cache = enforce_cache)$age)
+  
+  # make grouping variable
+  grouping <- vapply(ages, function(x){
+    # get start and end age of the group based on the location of the dash
+    # in the label (which is defined based on the object brk from setup.R)
+    start_end <- unlist(strsplit(x, "-"))
+    if(length(start_end) == 1){
+      start_end <- c(start_end, nrow(C) - 1)
+    }
+    # convert to numeric
+    start_end <- as.numeric(gsub("\\D", "", start_end))
+    # return length of the sequence from start to end
+    return(length(seq(start_end[1], start_end[2], by = 1)))
+  }, numeric(1L), USE.NAMES = FALSE)
+  
+  # Construct weights
+  w <- setNames(pop$values / sum(pop$values), pop$age_lab)
+  
+  # Aggregate matrix
+  C <- hhh4contacts::aggregateC(C, weights = w, grouping = grouping)
+  
+  # save it
+  saveRDS(C, file = make_path(cache_dir, filename))
+  
+  C
+  
+}

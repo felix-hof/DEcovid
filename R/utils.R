@@ -266,6 +266,8 @@ utils::globalVariables(c(
   # weekdays.R
   "reference",
   # get_data.R
-  "overview"
+  "overview",
+  # neighbour_matrices.R
+  "age_lab"
 ))
 

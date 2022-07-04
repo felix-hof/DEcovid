@@ -160,7 +160,8 @@ process_vaccination <- function(cache_dir,
                                 enforce_cache){
 
   # get population and vaccination
-  pop <- get_one_year_population(cache_dir = cache_dir,
+  pop <- get_one_year_population(type = "processed",
+                                 cache_dir = cache_dir,
                                  enforce_cache = enforce_cache)
 
   vac <- get_raw_vaccination(cache_dir = cache_dir,
@@ -346,6 +347,8 @@ get_raw_vaccination_from_source <- function(cache_dir, filename){
 
 #' Download the one year age population from Eurostat or get a cached version of the same data
 #'
+#' @param type Either \code{"raw"} or {"processed"}. The first, returns population in one year age groups, the latter is used for
+#' mapping age groups in the vaccination data.
 #' @template cache_dir
 #' @template enforce_cache
 #'
@@ -353,14 +356,15 @@ get_raw_vaccination_from_source <- function(cache_dir, filename){
 #' and one year age bands. The output also contains columns that indicate the respective
 #' age group that people of a specific age belong to in the vaccination and case data set, respectively.
 #' @noRd
-get_one_year_population <- function(cache_dir,
+get_one_year_population <- function(type,
+                                    cache_dir,
                                     enforce_cache){
 
   # Check inputs
   check_enforce_cache(enforce_cache)
 
   # set parameters for cacheing
-  filename <- "one_year_population.rds"
+  filename <- if(type == "raw") "one_year_population_raw.rds" else "one_year_population_processed.rds"
 
   # make decision whether to get data from cached file or from source
   from_cache <- read_from_cache(cache_dir = cache_dir, filename = filename,
@@ -377,7 +381,7 @@ get_one_year_population <- function(cache_dir,
     if(from_cache){
       dat <- readRDS(make_path(cache_dir, filename))
     } else {
-      dat <- get_one_year_population_from_source(cache_dir = cache_dir, filename = filename)
+      dat <- get_one_year_population_from_source(type = type, cache_dir = cache_dir, filename = filename)
     }
   }
 
@@ -396,12 +400,11 @@ get_one_year_population <- function(cache_dir,
 #' @noRd
 #' @importFrom restatapi get_eurostat_data
 #' @importFrom dplyr filter select mutate case_when rename
-get_one_year_population_from_source <- function(cache_dir, filename){
+get_one_year_population_from_source <- function(type, cache_dir, filename){
 
   # get population per Bundesland and age group
-  pop <- suppressWarnings(restatapi::get_eurostat_data("demo_r_d2jan",
+  pop_raw <- suppressWarnings(restatapi::get_eurostat_data("demo_r_d2jan",
                                       stringsAsFactors = FALSE,
-                                      cache = FALSE,
                                       verbose = FALSE)) %>%
     dplyr::filter(sex == "T",
                   time == "2020",
@@ -413,8 +416,13 @@ get_one_year_population_from_source <- function(cache_dir, filename){
                   age = dplyr::case_when(age == "OPEN" ~ "100",
                                          age == "LT1" ~ "0",
                                          TRUE ~ age),
-                  age = as.numeric(age),
-                  age_group_vac = as.character(cut(age,
+                  age = as.numeric(age))
+  #save
+  saveRDS(pop_raw, make_path(cache_dir, "one_year_population_raw.rds"))
+  
+  # continue
+  pop_processed <- pop_raw %>% 
+    dplyr::mutate(age_group_vac = as.character(cut(age,
                                                breaks = c(0, 4, 11, 17, 59, Inf),
                                                include.lowest = TRUE,
                                                right = TRUE)),
@@ -427,8 +435,9 @@ get_one_year_population_from_source <- function(cache_dir, filename){
     dplyr::rename(region = geo, value = values)
 
   # save this to file
-  saveRDS(pop, file = make_path(cache_dir, filename))
+  saveRDS(pop_processed, file = make_path(cache_dir, filename))
 
+  pop <- if(type == "raw") pop_raw else pop_processed
   pop
 }
 

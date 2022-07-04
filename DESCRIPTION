@@ -30,7 +30,8 @@ Imports:
     units,
     stats,
     surveillance,
-    Rdpack
+    Rdpack,
+    hhh4contacts
 RdMacros: Rdpack
 Depends: 
     R (>= 3.5.0)
