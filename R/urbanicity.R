@@ -88,8 +88,11 @@ get_urbanicity_from_source <- function(cache_dir, filename){
   # get data
   nuts_table <- nuts_table(cache_dir)
   # Download excel file
+  oldopt <- getOption("timeout")
+  options(timeout = max(300, getOption("timeout")))
   "https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/Archiv/GVAuszugJ/31122019_Auszug_GV.xlsx?__blob=publicationFile" %>%
     utils::download.file(destfile = make_path(cache_dir, "31122019_Auszug_GV.xlsx"), quiet = TRUE)
+  options(timeout = oldopt)
 
   dat <- readxl::read_xlsx(make_path(cache_dir, "31122019_Auszug_GV.xlsx"),
                            sheet = "Onlineprodukt_Gemeinden_311219",

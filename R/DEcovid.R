@@ -26,10 +26,6 @@
 #' \code{\link{get_weekday}} \cr
 #' \code{\link{get_weekend}} \cr
 #' \cr
-#' For generation of tables and plots: \cr
-#' \cr
-#' \code{\link{parameter_table}} \cr
-#' \cr
 #' For reshaping data between tibbles and
 #' matrices used in \code{\link[surveillance]{hhh4}} or \code{\link[hhh4addon]{profile_par_lag}}: \cr
 #' \cr

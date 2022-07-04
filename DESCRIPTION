@@ -26,11 +26,12 @@ Imports:
     parallel,
     readxl,
     ISOweek,
-    stringr,
-    rvest,
     rlang,
     units,
     stats,
     surveillance,
     Rdpack
 RdMacros: Rdpack
+Depends: 
+    R (>= 3.5.0)
+LazyData: true

@@ -1,129 +1,168 @@
-#' Make a table from an \code{hhh4} model object
-#'
-#' @param model \code{hhh4} model object
-#' @param par_names A named \code{character} vector which is used to map variable names to the actual names for the table.
-#' @param idx2Exp Must be one of \code{TRUE} or \code{FALSE}. Indicates whether covariates should be given on the exp scale.
-#' @param reparamPsi Must be one of \code{TRUE} or \code{FALSE}. Indicates whether overdispersion parameters should be reparametrised.
-#' @param amplitudeShift Must be one of \code{TRUE} or \code{FALSE}. Indicates whether seasonality coefficients should be reparametrised.
-#'
-#' @return A \code{tibble} containing parameter estimates and standard errors. Can be passed to \code{\link[kableExtra]{kable}}
-#' @importFrom dplyr case_when mutate tibble left_join select arrange bind_rows full_join %>% slice
-#'
-#' @export
-#'
-parameter_table <- function(model, par_names, idx2Exp = FALSE, reparamPsi = TRUE, amplitudeShift = TRUE){
-
-  # get parameters
-  if(idx2Exp){
-    pars <- summary(model, amplitudeShift = amplitudeShift, idx2Exp = TRUE, reparamPsi = reparamPsi)[["fixef"]]
-  } else {
-    pars <- summary(model, amplitudeShift = amplitudeShift, reparamPsi = reparamPsi)[["fixef"]]
-  }
-
-  # make regular expressions and get lag parameter
-  regex_comp <- paste0(ifelse(idx2Exp, "^(exp\\()?", "^"), c("end\\.", "ar\\.", "ne\\."))
-  regex_comp <- c(regex_comp, paste0(ifelse(reparamPsi, "^", "^-log\\("), "overdisp\\.*"),
-                  paste0(ifelse(idx2Exp, "^exp\\(", "^"), "neweights\\."))
-
-  # construct table
-  dat <- dplyr::tibble(par = rownames(pars),
-                       est = pars[, "Estimate"],
-                       sderr = pars[, "Std. Error"])
-  dat <- dplyr::mutate(dat, comp = dplyr::case_when(grepl(regex_comp[1], par) ~ "endemic",
-                                                    grepl(regex_comp[2], par) ~ "autoregressive",
-                                                    grepl(regex_comp[3], par) ~ "spatiotemporal",
-                                                    grepl(regex_comp[4], par) ~ "overdispersion",
-                                                    grepl(regex_comp[5], par) ~ "power law"))
-  dat <- dplyr::mutate(dat,
-                       trans = dplyr::case_when(comp %in% c("endemic", "autoregressive", "spatiotemporal") & idx2Exp & !grepl("\\*\\s*pi\\s*\\*", par) ~ "exp",
-                                                comp == "overdispersion" & reparamPsi ~ "",
-                                                comp == "overdispersion" & !reparamPsi ~ "-log",
-                                                comp == "power law" & idx2Exp ~ "exp",
-                                                TRUE ~ ""))
-  # get parameter names
-  dat$name <- gsub("^.+?\\.(.+)$", "\\1", dat$par)
-  if(idx2Exp) dat$name <- gsub("\\)$", "", dat$name)
-  dat$name[grepl("^A\\(.+$", dat$name)] <- "amplitude"
-  dat$name[grepl("^s\\(.+$", dat$name)] <- "phase"
-  dat$name[grepl("^d$", dat$name)] <- "decay"
-  if(any(grepl("^(sin|cos)\\(.+\\)$", dat$name))) stop("amplitudeShift = FALSE is not implemented.")
-  dat <- dplyr::left_join(x = dat, y = dplyr::tibble(new_name = names(par_names),
-                                                     name = par_names), by = "name")
-  dat <- dplyr::mutate(dat, name = ifelse(is.na(new_name), name, new_name))
-  dat <- dplyr::select(dat, -new_name)
-  dat$name[dat$name == "1"] <- "intercept"
-  n_overdisp <- sum(dat$comp == "overdispersion")
-
-  # construct latex
-  dat <- dplyr::mutate(dat, latex = paste0(
-    "$",
-    ifelse(trans != "", paste0("\\text{", trans, "} \\, "), ""),
-    dplyr::case_when(comp %in% c("endemic", "autoregressive", "spatiotemporal") ~ "\\beta",
-                     comp == "overdispersion" ~ "\\psi",
-                     comp == "lag" ~ paste0("\\", name),
-                     comp == "power law" ~ "d"),
-    ifelse(!(comp %in% c("lag", "overdispersion", "power law")) | (comp == "overdispersion" & n_overdisp > 1L), "_{", ""),
-    dplyr::case_when(comp == "endemic" ~ "\\nu",
-                     comp == "autoregressive" ~ "\\lambda",
-                     comp == "spatiotemporal" ~ "\\phi",
-                     comp == "overdispersion"  & n_overdisp != 1L ~ name,
-                     TRUE ~ ""),
-    dplyr::case_when(#comp == "endemic" & grepl("^\\d", name) ~ paste0(" ", name),
-      #comp == "endemic" & !grepl("^\\d", name) ~ paste0("_{\\text{", name, "}}"),
-      comp == "endemic" ~ paste0("_{\\text{", name, "}}"),
-      #comp == "autoregressive" & grepl("^\\d", name) ~ paste0(" ", name),
-      #comp == "autoregressive" & !grepl("^\\d", name) ~ paste0("_{\\text{", name, "}}"),
-      comp == "autoregressive" ~ paste0("_{\\text{", name, "}}"),
-      #comp == "spatiotemporal" & grepl("^\\d", name) ~ paste0(" ", name),
-      #comp == "spatiotemporal" & !grepl("^\\d", name) ~ paste0("_{\\text{", name, "}}"),
-      comp == "spatiotemporal" ~ paste0("_{\\text{", name, "}}"),
-      comp == "overdispersion"  & n_overdisp != 1L ~ "}",
-      TRUE ~ ""),
-    ifelse(comp %in% c("endemic", "autoregressive", "spatiotemporal"), "}", ""),
-    "$"
-  ))
-
-  # split table and align everything
-  in_model <- c(vapply(list("end", "ar", "ne"), function(x) model$control[[x]]$inModel, logical(1L)), TRUE)
-  dat <- dplyr::select(dat, -par, -trans)
-  dat <- dplyr::arrange(dat, name)
-  if(any(dat$name == "amplitude")){
-    amp_end_row <- dat %>% dplyr::slice(which(name == "amplitude" & comp == "endemic")) %>% nrow
-    if(amp_end_row != 0L){
-      idx <- which(dat$name == "amplitude" & dat$comp == "endemic")
-      amp_row <- dat %>% dplyr::slice(idx)
-      shf_idx <- which(dat$name == "phase" & dat$comp == "endemic")
-      dat <- dplyr::bind_rows(dat[seq_len(shf_idx)[-c(idx, shf_idx)], ], amp_row, dat[shf_idx:nrow(dat), ])
-    }
-    amp_epi_row <- dat %>% dplyr::slice(which(name == "amplitude" & comp == "epidemic")) %>% nrow
-    if(amp_epi_row != 0L){
-      idx <- which(dat$name == "amplitude" & dat$comp == "epidemic")
-      amp_row <- dat %>% dplyr::slice(idx)
-      shf_idx <- which(dat$name == "phase" & dat$comp == "epidemic")
-      dat <- dplyr::bind_rows(dat[seq_len(shf_idx)[-c(idx, shf_idx)], ], amp_row, dat[shf_idx:nrow(dat), ])
-    }
-    amp_ar_row <- dat %>% dplyr::slice(which(name == "amplitude" & comp == "autoregressive")) %>% nrow
-    if(amp_ar_row != 0L){
-      idx <- which(dat$name == "amplitude" & dat$comp == "autoregressive")
-      amp_row <- dat %>% dplyr::slice(idx)
-      shf_idx <- which(dat$name == "phase" & dat$comp == "autoregressive")
-      dat <- dplyr::bind_rows(dat[seq_len(shf_idx)[-c(idx, shf_idx)], ], amp_row, dat[shf_idx:nrow(dat), ])
-    }
-  }
-  dat <- dplyr::select(dat, latex, est, sderr, name, comp)
-  end <- dat[dat$comp == "endemic", colnames(dat) != "comp"]
-  colnames(end)[grepl("^(est|sderr|latex)", colnames(end))] <- paste0(colnames(end)[grepl("^(est|sderr|latex)", colnames(end))], ".end")
-  ar <- dat[dat$comp == "autoregressive", colnames(dat) != "comp"]
-  colnames(ar)[grepl("^(est|sderr|latex)", colnames(ar))] <- paste0(colnames(ar)[grepl("^(est|sderr|latex)", colnames(ar))], ".ar")
-  ne <- dat[dat$comp == "spatiotemporal", colnames(dat) != "comp"]
-  colnames(ne)[grepl("^(est|sderr|latex)", colnames(ne))] <- paste0(colnames(ne)[grepl("^(est|sderr|latex)", colnames(ne))], ".ne")
-  rest <- dat[!(dat$comp %in% c("endemic", "autoregressive", "spatiotemporal")), colnames(dat) != "comp"]
-  colnames(rest)[grepl("^(est|sderr|latex)", colnames(rest))] <- paste0(colnames(rest)[grepl("^(est|sderr|latex)", colnames(rest))], ".rest")
-  out <- dplyr::full_join(dplyr::full_join(dplyr::full_join(end, ar, "name"), ne, "name"), rest, "name")
-  out <- dplyr::select(out, seq_along(out)[vapply(out, function(x){!all(is.na(x))}, logical(1L))])
-  out <- dplyr::select(out, -name)
-  colnames(out) <- rep(c("Coefficient", "Estimate", "Std. Error"), times = ncol(out)/2)
-
-  # return
-  return(out)
-}
+# Make a parameter table from an \code{hhh4} model
+# 
+# @description This function takes a fitted \code{hhh4}-model and extracts its estimates and standard errors as well as the parameter
+# names. The parameter names are returned in a latex compatible format. 
+#
+# @param model \code{hhh4} model object
+# @param par_names A \code{list}. The elements of the list must be named \code{character} vectors mapping the internal parameter names to 
+# names that should actually be displayed in the table. The format requires that the replacement names must be constructed such that the 
+# parameter name that should be displayed in the table should be the name of the vector element containing the internal name. Intercepts are automatically
+# handled and should not be renamed by the user. Also, the output table respects the order of the list elements such that the parameters in each
+# list element will be placed below each other in the output table.
+# @param idx2Exp Must be one of \code{TRUE} or \code{FALSE}. Indicates whether covariates should be given on the exp scale.
+# @param reparamPsi Must be one of \code{TRUE} or \code{FALSE}. Indicates whether overdispersion parameters should be reparametrised.
+# @param amplitudeShift Must be one of \code{TRUE} or \code{FALSE}. Indicates whether seasonality coefficients should be reparametrised.
+# @param show_intercept Must be one of \code{TRUE} or \code{FALSE}. Indicates whether intercepts should be shown in the output table.
+#
+# @return A \code{tibble} containing parameter estimates and standard errors. Can be passed to \code{\link[kableExtra]{kable}}
+# @importFrom dplyr case_when mutate tibble left_join select %>%
+# @importFrom hhh4addon poisson_lag
+#
+# @export
+#
+# parameter_table <- function(model, par_names = NULL, idx2Exp = FALSE, reparamPsi = TRUE, amplitudeShift = TRUE,
+#                             show_intercept = TRUE){
+#   
+#   stopifnot(length(idx2Exp) == 1L && length(reparamPsi) == 1L && length(amplitudeShift) == 1L,
+#             is.logical(idx2Exp) && is.logical(reparamPsi) && is.logical(amplitudeShift))
+#   
+#   # get parameters
+#   if(idx2Exp){
+#     pars <- summary(model, amplitudeShift = amplitudeShift, idx2Exp = TRUE, reparamPsi = reparamPsi)[["fixef"]]
+#   } else {
+#     pars <- summary(model, amplitudeShift = amplitudeShift, reparamPsi = reparamPsi)[["fixef"]]
+#   }
+#   
+#   # make regular expressions and get lag parameter
+#   regex_comp <- paste0(ifelse(idx2Exp, "^exp\\(", "^"), c("end\\.", "ar\\.", "ne\\."))
+#   regex_comp <- c(regex_comp, 
+#                   paste0(ifelse(reparamPsi, "^", "^-log\\("), "overdisp\\.?"),
+#                   "^neweights\\.")
+#   if(inherits(model, "hhh4_lag")){
+#     if(identical(model$control$funct_lag, hhh4addon::poisson_lag)){
+#       lag_par <- dplyr::tibble(par = "lag.kappa", est = model$par_lag, sderr = model$se_par_lag, comp = "lag", trans = "log")
+#     } else {
+#       stop("Unrecognised lag function.")
+#     }
+#   } else {
+#     lag_par <- NULL
+#   }
+#   
+#   # construct table
+#   model_components <- c("endemic", "autoregressive", "spatiotemporal")
+#   dat <- dplyr::tibble(par = rownames(pars),
+#                        est = pars[, "Estimate"],
+#                        sderr = pars[, "Std. Error"])
+#   dat <- dplyr::mutate(dat, comp = dplyr::case_when(grepl(regex_comp[1], par) ~ "endemic",
+#                                                     grepl(regex_comp[2], par) ~ "autoregressive",
+#                                                     grepl(regex_comp[3], par) ~ "spatiotemporal",
+#                                                     grepl(regex_comp[4], par) ~ "overdispersion",
+#                                                     grepl(regex_comp[5], par) ~ "power law"))
+#   dat <- dplyr::mutate(dat, 
+#                        trans = dplyr::case_when(comp %in% model_components & idx2Exp ~ "exp",
+#                                                 comp == "overdispersion" & reparamPsi ~ "",
+#                                                 comp == "overdispersion" & !reparamPsi ~ "-log",
+#                                                 TRUE ~ ""))
+#   # add lag parameter
+#   if(!is.null(lag_par)) dat <- dplyr::add_row(dat, lag_par)
+#   
+#   # get parameter names
+#   dat$name <- gsub("^.+?\\.", "", dat$par)
+#   dat$name <- gsub("^1\\.", "", dat$name)
+#   dat$name[grepl("^A\\(.+\\)$", dat$name)] <- "Amplitude"
+#   dat$name[grepl("^s\\(.+\\)$", dat$name)] <- "Phase"
+#   if(any(grepl("^(sin|cos)\\(.+\\)$", dat$name))) stop("amplitudeShift = FALSE is not implemented.")
+#   dat$is_in_par_list <- dat$name %in% do.call(`c`, par_names)
+#   dat_split <- lapply(seq_along(par_names), function(x){
+#     subset <- dplyr::filter(dat, name %in% par_names[[x]])
+#     subset <- dplyr::left_join(x = subset, y = dplyr::tibble(new_name = names(par_names[[x]]), name = par_names[[x]]), by = "name")
+#     subset$category <- names(par_names)[x]
+#     subset
+#   })
+#   not_in_par_list <- dat[!dat$is_in_par_list, ]
+#   not_in_par_list$new_name <- not_in_par_list$name
+#   not_in_par_list$category <- "other"
+#   dat <- do.call(rbind, append(dat_split, list(not_in_par_list)))
+#   dat$name <- dat$new_name
+#   dat <- dplyr::select(dat, -new_name)
+#   dat$name[dat$name == "1"] <- "Intercept"
+#   n_overdisp <- sum(dat$comp == "overdispersion")
+#   dat$is_intercept <- grepl("^(end|ar|ne)\\.1\\.?.*$", dat$par)
+#   dat$category[dat$is_intercept] <- "Intercept"
+#   if(!show_intercept) dat <- dat[!dat$is_intercept, ]
+#   
+#   # construct latex
+#   dat <- dplyr::mutate(dat, latex = paste0(
+#     "$",
+#     ifelse(trans != "", paste0("\\text{", trans, "} \\, "), ""),
+#     dplyr::case_when(comp %in% model_components & !is_intercept ~ "\\beta",
+#                      comp %in% model_components & is_intercept ~ "\\alpha",
+#                      comp == "overdispersion" ~ "\\psi",
+#                      comp == "lag" ~ paste0("\\", name),
+#                      comp == "power law" ~ name),
+#     #ifelse(comp != "lag", "_{", ""),
+#     dplyr::case_when(comp == model_components[1] ~ "^{(\\nu)}",
+#                      comp == model_components[2] ~ "^{(\\lambda)}",
+#                      comp == model_components[3] ~ "^{(\\phi)}",
+#                      comp == "overdispersion" & name != "overdisp" ~ name,
+#                      TRUE ~ ""),
+#     dplyr::case_when(#comp == "endemic" & grepl("^\\d", name) ~ paste0(" ", name),
+#       #comp == "endemic" & !grepl("^\\d", name) ~ paste0("_{\\text{", name, "}}"),
+#       comp == model_components[1] & name != "Intercept" ~ paste0("_{\\text{", name, "}}"),
+#       #comp == "autoregressive" & grepl("^\\d", name) ~ paste0(" ", name),
+#       #comp == "autoregressive" & !grepl("^\\d", name) ~ paste0("_{\\text{", name, "}}"),
+#       comp == model_components[2] & name != "Intercept" ~ paste0("_{\\text{", name, "}}"),
+#       #comp == "spatiotemporal" & grepl("^\\d", name) ~ paste0(" ", name),
+#       #comp == "spatiotemporal" & !grepl("^\\d", name) ~ paste0("_{\\text{", name, "}}"),
+#       comp == model_components[3] & name != "Intercept" ~ paste0("_{\\text{", name, "}}"),
+#       #comp == "overdispersion" ~ "}",
+#       TRUE ~ ""),
+#     #ifelse(comp %in% model_components, "}", ""),
+#     "$"
+#   ))
+#   
+#   # split table and align everything
+#   ## loop over components and categories
+#   dat$comp[!(dat$comp %in% model_components)] <- "other"
+#   categories <- unique(dat$category)
+#   # Move intercept to top
+#   categories <- c(categories[categories == "Intercept"], categories[categories != "Intercept"])
+#   # Get components
+#   components <- unique(dat$comp)
+#   components <- c(model_components, "other")[c(model_components, "other") %in% components]
+#   # set some kind of order for the parameters in other such that it can be appended
+#   # to par_names list
+#   other_intercept <- unique(with(dat, name[category == "Intercept"]))
+#   names(other_intercept) <- other_intercept
+#   other_levels <- unique(with(dat, name[category == "other" & !is_intercept]))
+#   # other_levels <- unique(with(dplyr::arrange(dat, dplyr::desc(is_intercept)), name[category == "other"]))
+#   if(all(c("Amplitude", "Phase") %in% other_levels)){
+#     other_levels <- c("Amplitude", "Phase", other_levels[!(other_levels %in% c("Amplitude", "Phase"))])
+#   }
+#   names(other_levels) <- other_levels
+#   par_names <- append(par_names, list("Intercept" = other_intercept), after = 0L)
+#   par_names <- append(par_names, list("other" = other_levels))
+#   
+#   # Complete the table
+#   tab <- lapply(components, function(x){
+#     # get parameters of every component
+#     comp_subs <- dat[dat$comp == x, ]
+#     # Complete groups
+#     out <- lapply(categories, function(y){
+#       cat_subs <- comp_subs[comp_subs$category == y, ]
+#       all_levels <- dplyr::tibble(name = names(par_names[[y]]))
+#       out <- dplyr::left_join(all_levels, cat_subs, by = "name")
+#       out <- out[, c("latex", "est", "sderr")]
+#       colnames(out) <- c("Coefficient", "Estimate", "Std. Error")
+#       out
+#     })
+#     do.call(`rbind`, out)
+#   })
+#   names(tab) <- components
+#   
+#   # cbind columns
+#   tab <- do.call(`cbind`, tab)
+#   colnames(tab) <- gsub("^.*?\\.", "", colnames(tab))
+#   # return
+#   return(tab)
+# }
